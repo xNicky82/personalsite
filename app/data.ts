@@ -22,6 +22,14 @@ type SocialLink = {
   link: string
 }
 
+type FeaturedProject = {
+  title: string
+  description: string
+  link: string
+  image: string
+  id: string
+}
+
 type Album = {
   title: string
   artist: string
@@ -33,6 +41,17 @@ type Artwork = {
   artist: string
   image: string
 }
+
+export const FEATURED_PROJECTS: FeaturedProject[] = [
+  {
+    title: "Canada's Largest Giveaway",
+    description:
+      'Wealthsimple × Pine gave away a fully furnished million-dollar home in Prince Edward County to celebrate $1B in mortgages funded. I led the campaign.',
+    link: 'https://www.wealthsimple.com/en-ca/house-giveaway-2025',
+    image: '/projects/canadas-largest-giveaway.jpg',
+    id: 'project1',
+  },
+]
 
 export const WORK_EXPERIENCE: WorkExperience[] = [
   {

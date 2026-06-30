@@ -5,6 +5,7 @@ import { Magnetic } from '@/components/ui/magnetic'
 import { Carousel } from '@/components/ui/carousel'
 import { SlidingNumber } from '@/components/ui/sliding-number'
 import {
+  FEATURED_PROJECTS,
   WORK_EXPERIENCE,
   EDUCATION,
   EMAIL,
@@ -88,6 +89,48 @@ export default function Personal() {
             . Before that, I founded a spatial design studio and spent time on
             operations at Tesla.
           </p>
+        </div>
+      </motion.section>
+
+      <motion.section
+        variants={VARIANTS_SECTION}
+        transition={TRANSITION_SECTION}
+      >
+        <h3 className="mb-5 text-lg font-medium">Featured Projects</h3>
+        <div className="flex flex-col space-y-2">
+          {FEATURED_PROJECTS.map((project) => (
+            <a
+              className="group relative overflow-hidden rounded-2xl bg-zinc-300/30 p-[1px] dark:bg-zinc-600/30"
+              href={project.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              key={project.id}
+            >
+              <Spotlight
+                className="from-zinc-900 via-zinc-800 to-zinc-700 blur-2xl dark:from-zinc-100 dark:via-zinc-200 dark:to-zinc-50"
+                size={64}
+              />
+              <div className="relative h-full w-full overflow-hidden rounded-[15px] bg-white dark:bg-zinc-950">
+                <div className="aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-900">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={project.image}
+                    alt={project.title}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="p-4">
+                  <h4 className="font-normal dark:text-zinc-100">
+                    {project.title}
+                  </h4>
+                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    {project.description}
+                  </p>
+                </div>
+              </div>
+            </a>
+          ))}
         </div>
       </motion.section>
 
