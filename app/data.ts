@@ -12,10 +12,22 @@ type SocialLink = {
   link: string
 }
 
+type Album = {
+  title: string
+  artist: string
+  cover: string
+}
+
+type Artwork = {
+  title: string
+  artist: string
+  image: string
+}
+
 export const WORK_EXPERIENCE: WorkExperience[] = [
   {
     company: 'Spellbook',
-    title: 'Growth Lead',
+    title: 'Growth Hacker',
     start: '2026',
     end: 'Present',
     link: 'https://www.spellbook.legal',
@@ -23,7 +35,7 @@ export const WORK_EXPERIENCE: WorkExperience[] = [
   },
   {
     company: 'Pine',
-    title: 'Growth Lead',
+    title: 'Growth Hacker',
     start: '2024',
     end: '2026',
     link: 'https://www.pine.ca',
@@ -61,9 +73,29 @@ export const SOCIAL_LINKS: SocialLink[] = [
     link: 'https://www.linkedin.com/in/nicholasjrocha/',
   },
   {
+    label: 'X',
+    link: 'https://x.com/NicholasJRocha',
+  },
+  {
     label: 'GitHub',
     link: 'https://github.com/xNicky82',
   },
+]
+
+export const ALBUMS: Album[] = [
+  { title: 'Ultraviolence', artist: 'Lana Del Rey', cover: '/albums/album-1.jpg' },
+  { title: 'Tailor Swif', artist: 'A$AP Rocky', cover: '/albums/album-2.jpg' },
+  { title: 'Midnight Miami', artist: '', cover: '/albums/album-3.jpg' },
+  { title: '2', artist: '', cover: '/albums/album-4.jpg' },
+  { title: '', artist: '', cover: '/albums/album-5.jpg' },
+  { title: '', artist: 'Yung Lean', cover: '/albums/album-6.jpg' },
+]
+
+export const ARTWORKS: Artwork[] = [
+  { title: 'Spring landscape', artist: 'Claude Monet', image: '/artwork/artwork-1.jpg' },
+  { title: 'Water Lilies', artist: 'Claude Monet', image: '/artwork/artwork-2.jpg' },
+  { title: 'The Sea', artist: 'Claude Monet', image: '/artwork/artwork-3.jpg' },
+  { title: 'Reflections', artist: 'Claude Monet', image: '/artwork/artwork-4.jpg' },
 ]
 
 export const EMAIL = 'nicholas.rocha@spellbook.legal'
