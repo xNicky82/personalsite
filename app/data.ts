@@ -182,23 +182,23 @@ export const ALBUMS: Album[] = [
 
 export const ARTWORKS: Artwork[] = [
   {
+    title: 'A Venetian Onion Seller',
+    artist: 'John Singer Sargent',
+    image: '/artwork/artwork-3.jpg',
+  },
+  {
     title: 'The Wood Engraver',
     artist: 'Charles Frederic Ulrich',
-    image: '/artwork/artwork-3.jpg',
+    image: '/artwork/artwork-5.jpg',
   },
   {
     title: 'In the Forge',
     artist: 'Stanisław Lentz',
-    image: '/artwork/artwork-5.jpg',
+    image: '/artwork/artwork-6.jpg',
   },
   {
     title: 'The Port of New York by Moonlight',
     artist: 'Edward Moran',
-    image: '/artwork/artwork-6.jpg',
-  },
-  {
-    title: 'A Venetian Onion Seller',
-    artist: 'John Singer Sargent',
     image: '/artwork/artwork-7.jpg',
   },
 ]
