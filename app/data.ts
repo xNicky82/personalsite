@@ -83,19 +83,27 @@ export const SOCIAL_LINKS: SocialLink[] = [
 ]
 
 export const ALBUMS: Album[] = [
-  { title: 'Ultraviolence', artist: 'Lana Del Rey', cover: '/albums/album-1.jpg' },
-  { title: 'Tailor Swif', artist: 'A$AP Rocky', cover: '/albums/album-2.jpg' },
-  { title: 'Midnight Miami', artist: '', cover: '/albums/album-3.jpg' },
-  { title: '2', artist: '', cover: '/albums/album-4.jpg' },
+  { title: '', artist: '', cover: '/albums/album-1.jpg' },
+  { title: '', artist: '', cover: '/albums/album-2.jpg' },
+  { title: '', artist: '', cover: '/albums/album-3.jpg' },
+  { title: '', artist: '', cover: '/albums/album-4.jpg' },
   { title: '', artist: '', cover: '/albums/album-5.jpg' },
-  { title: '', artist: 'Yung Lean', cover: '/albums/album-6.jpg' },
+  { title: '', artist: '', cover: '/albums/album-6.jpg' },
+  { title: '', artist: '', cover: '/albums/album-7.jpg' },
+  { title: '', artist: '', cover: '/albums/album-8.jpg' },
+  { title: '', artist: '', cover: '/albums/album-9.jpg' },
+  { title: '', artist: '', cover: '/albums/album-10.jpg' },
+  { title: '', artist: '', cover: '/albums/album-11.jpg' },
 ]
 
 export const ARTWORKS: Artwork[] = [
-  { title: 'Spring landscape', artist: 'Claude Monet', image: '/artwork/artwork-1.jpg' },
-  { title: 'Water Lilies', artist: 'Claude Monet', image: '/artwork/artwork-2.jpg' },
-  { title: 'The Sea', artist: 'Claude Monet', image: '/artwork/artwork-3.jpg' },
-  { title: 'Reflections', artist: 'Claude Monet', image: '/artwork/artwork-4.jpg' },
+  { title: '', artist: '', image: '/artwork/artwork-1.jpg' },
+  { title: '', artist: '', image: '/artwork/artwork-2.jpg' },
+  { title: '', artist: '', image: '/artwork/artwork-3.jpg' },
+  { title: '', artist: '', image: '/artwork/artwork-4.jpg' },
+  { title: '', artist: '', image: '/artwork/artwork-5.jpg' },
+  { title: '', artist: '', image: '/artwork/artwork-6.jpg' },
+  { title: '', artist: '', image: '/artwork/artwork-7.jpg' },
 ]
 
 export const EMAIL = 'nicholas.rocha@spellbook.legal'
