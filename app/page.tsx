@@ -6,6 +6,7 @@ import { Carousel } from '@/components/ui/carousel'
 import { SlidingNumber } from '@/components/ui/sliding-number'
 import {
   FEATURED_PROJECTS,
+  PRESS,
   WORK_EXPERIENCE,
   EDUCATION,
   EMAIL,
@@ -128,6 +129,37 @@ export default function Personal() {
                     {project.description}
                   </p>
                 </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </motion.section>
+
+      <motion.section
+        variants={VARIANTS_SECTION}
+        transition={TRANSITION_SECTION}
+      >
+        <h3 className="mb-5 text-lg font-medium">Press</h3>
+        <div className="flex flex-col space-y-2">
+          {PRESS.map((item) => (
+            <a
+              className="relative overflow-hidden rounded-2xl bg-zinc-300/30 p-[1px] dark:bg-zinc-600/30"
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              key={item.id}
+            >
+              <Spotlight
+                className="from-zinc-900 via-zinc-800 to-zinc-700 blur-2xl dark:from-zinc-100 dark:via-zinc-200 dark:to-zinc-50"
+                size={64}
+              />
+              <div className="relative h-full w-full rounded-[15px] bg-white p-4 dark:bg-zinc-950">
+                <p className="text-xs tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  {item.outlet}
+                </p>
+                <h4 className="mt-1 font-normal dark:text-zinc-100">
+                  {item.title}
+                </h4>
               </div>
             </a>
           ))}

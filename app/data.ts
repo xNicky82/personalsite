@@ -30,6 +30,13 @@ type FeaturedProject = {
   id: string
 }
 
+type PressItem = {
+  outlet: string
+  title: string
+  link: string
+  id: string
+}
+
 type Album = {
   title: string
   artist: string
@@ -50,6 +57,35 @@ export const FEATURED_PROJECTS: FeaturedProject[] = [
     link: 'https://www.wealthsimple.com/en-ca/house-giveaway-2025',
     image: '/projects/canadas-largest-giveaway.jpg',
     id: 'project1',
+  },
+]
+
+export const PRESS: PressItem[] = [
+  {
+    outlet: 'iPhone in Canada',
+    title:
+      'Wealthsimple Is Giving Away a Million-Dollar House (Plus $100K Cash)',
+    link: 'https://www.iphoneincanada.ca/2025/10/04/wealthsimple-is-giving-away-a-million-dollar-house-plus-100k-cash/',
+    id: 'press1',
+  },
+  {
+    outlet: 'Narcity',
+    title:
+      'You could win this million dollar home in Prince Edward County and here’s how to enter',
+    link: 'https://www.narcity.com/win-home-prince-edward-county',
+    id: 'press2',
+  },
+  {
+    outlet: 'Startup Ecosystem Canada',
+    title: 'Wealthsimple Launches Major Giveaway for Canadian Homeownership',
+    link: 'https://www.startupecosystem.ca/news/wealthsimple-launches-major-giveaway-for-canadian-homeownership/',
+    id: 'press3',
+  },
+  {
+    outlet: 'Wealthsimple on X',
+    title: 'And the winner is in! — Christian, from Quebec',
+    link: 'https://x.com/Wealthsimple/status/2022749314749968653',
+    id: 'press4',
   },
 ]
 
