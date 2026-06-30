@@ -7,6 +7,16 @@ type WorkExperience = {
   id: string
 }
 
+type Education = {
+  school: string
+  credential: string
+  description: string
+  start: string
+  end: string
+  link: string
+  id: string
+}
+
 type SocialLink = {
   label: string
   link: string
@@ -67,6 +77,29 @@ export const WORK_EXPERIENCE: WorkExperience[] = [
   },
 ]
 
+export const EDUCATION: Education[] = [
+  {
+    school: 'Queen’s University',
+    credential: 'Bachelor of Arts, Honours — Media Studies, Business',
+    description:
+      'Study of media and technology through historical and theoretical lenses, with emphasis on design rhetoric and the relationship between human communication and interface. Focused on Human-Artificial Intelligence Interaction (HAII), exploring how people engage with AI at the intersection of computer science, behavioural science, and design.',
+    start: '',
+    end: '',
+    link: 'https://www.queensu.ca',
+    id: 'edu1',
+  },
+  {
+    school: 'Queen’s University',
+    credential: 'Certificate, Innovation & Creativity',
+    description:
+      'Focused study on the role of creativity in business problem solving, specializing in how creative methods are applied to strategy, product, and marketing to drive innovation.',
+    start: '',
+    end: '',
+    link: 'https://www.queensu.ca',
+    id: 'edu2',
+  },
+]
+
 export const SOCIAL_LINKS: SocialLink[] = [
   {
     label: 'LinkedIn',
@@ -75,10 +108,6 @@ export const SOCIAL_LINKS: SocialLink[] = [
   {
     label: 'X',
     link: 'https://x.com/NicholasJRocha',
-  },
-  {
-    label: 'GitHub',
-    link: 'https://github.com/xNicky82',
   },
 ]
 
@@ -97,7 +126,6 @@ export const ALBUMS: Album[] = [
 ]
 
 export const ARTWORKS: Artwork[] = [
-  { title: '', artist: '', image: '/artwork/artwork-1.jpg' },
   { title: '', artist: '', image: '/artwork/artwork-2.jpg' },
   { title: '', artist: '', image: '/artwork/artwork-3.jpg' },
   { title: '', artist: '', image: '/artwork/artwork-4.jpg' },
@@ -106,4 +134,4 @@ export const ARTWORKS: Artwork[] = [
   { title: '', artist: '', image: '/artwork/artwork-7.jpg' },
 ]
 
-export const EMAIL = 'nicholas.rocha@spellbook.legal'
+export const EMAIL = 'nicholasjamesrocha@gmail.com'

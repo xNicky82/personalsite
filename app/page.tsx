@@ -6,6 +6,7 @@ import { Carousel } from '@/components/ui/carousel'
 import { SlidingNumber } from '@/components/ui/sliding-number'
 import {
   WORK_EXPERIENCE,
+  EDUCATION,
   EMAIL,
   SOCIAL_LINKS,
   ALBUMS,
@@ -132,8 +133,44 @@ export default function Personal() {
         variants={VARIANTS_SECTION}
         transition={TRANSITION_SECTION}
       >
+        <h3 className="mb-5 text-lg font-medium">Education</h3>
+        <div className="flex flex-col space-y-2">
+          {EDUCATION.map((edu) => (
+            <a
+              className="relative overflow-hidden rounded-2xl bg-zinc-300/30 p-[1px] dark:bg-zinc-600/30"
+              href={edu.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              key={edu.id}
+            >
+              <Spotlight
+                className="from-zinc-900 via-zinc-800 to-zinc-700 blur-2xl dark:from-zinc-100 dark:via-zinc-200 dark:to-zinc-50"
+                size={64}
+              />
+              <div className="relative h-full w-full rounded-[15px] bg-white p-4 dark:bg-zinc-950">
+                <div className="space-y-1">
+                  <h4 className="font-normal dark:text-zinc-100">
+                    {edu.credential}
+                  </h4>
+                  <p className="text-zinc-500 dark:text-zinc-400">
+                    {edu.school}
+                  </p>
+                  <p className="pt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    {edu.description}
+                  </p>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </motion.section>
+
+      <motion.section
+        variants={VARIANTS_SECTION}
+        transition={TRANSITION_SECTION}
+      >
         <h3 className="mb-5 text-lg font-medium">Albums on rotation</h3>
-        <Carousel itemClassName="w-32 sm:w-36">
+        <Carousel itemClassName="w-32 sm:w-36" autoScrollInterval={2000}>
           {ALBUMS.map((album) => (
             <div key={album.cover} className="space-y-2">
               <div className="aspect-square overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200/60 ring-inset dark:bg-zinc-900 dark:ring-zinc-800/60">
@@ -169,7 +206,7 @@ export default function Personal() {
         transition={TRANSITION_SECTION}
       >
         <h3 className="mb-5 text-lg font-medium">Artwork I like</h3>
-        <Carousel itemClassName="w-44 sm:w-52">
+        <Carousel itemClassName="w-44 sm:w-52" autoScrollInterval={2000}>
           {ARTWORKS.map((art) => (
             <div key={art.image} className="space-y-2">
               <div className="aspect-[3/4] overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200/60 ring-inset dark:bg-zinc-900 dark:ring-zinc-800/60">
