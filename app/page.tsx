@@ -221,12 +221,12 @@ export default function Personal() {
               {(art.title || art.artist) && (
                 <div className="px-1">
                   {art.title && (
-                    <p className="truncate text-sm text-zinc-900 dark:text-zinc-100">
+                    <p className="text-xs leading-snug text-zinc-900 dark:text-zinc-100">
                       {art.title}
                     </p>
                   )}
                   {art.artist && (
-                    <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">
                       {art.artist}
                     </p>
                   )}
