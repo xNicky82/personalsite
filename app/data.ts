@@ -22,6 +22,21 @@ type SocialLink = {
   link: string
 }
 
+type FeaturedProject = {
+  title: string
+  description: string
+  link: string
+  image: string
+  id: string
+}
+
+type PressItem = {
+  outlet: string
+  title: string
+  link: string
+  id: string
+}
+
 type Album = {
   title: string
   artist: string
@@ -33,6 +48,46 @@ type Artwork = {
   artist: string
   image: string
 }
+
+export const FEATURED_PROJECTS: FeaturedProject[] = [
+  {
+    title: "Canada's Largest Giveaway",
+    description:
+      'Wealthsimple × Pine gave away a fully furnished million-dollar home in Prince Edward County to celebrate $1B in mortgages funded. I led the campaign.',
+    link: 'https://www.wealthsimple.com/en-ca/house-giveaway-2025',
+    image: '/projects/canadas-largest-giveaway.jpg',
+    id: 'project1',
+  },
+]
+
+export const PRESS: PressItem[] = [
+  {
+    outlet: 'iPhone in Canada',
+    title:
+      'Wealthsimple Is Giving Away a Million-Dollar House (Plus $100K Cash)',
+    link: 'https://www.iphoneincanada.ca/2025/10/04/wealthsimple-is-giving-away-a-million-dollar-house-plus-100k-cash/',
+    id: 'press1',
+  },
+  {
+    outlet: 'Narcity',
+    title:
+      'You could win this million dollar home in Prince Edward County and here’s how to enter',
+    link: 'https://www.narcity.com/win-home-prince-edward-county',
+    id: 'press2',
+  },
+  {
+    outlet: 'Startup Ecosystem Canada',
+    title: 'Wealthsimple Launches Major Giveaway for Canadian Homeownership',
+    link: 'https://www.startupecosystem.ca/news/wealthsimple-launches-major-giveaway-for-canadian-homeownership/',
+    id: 'press3',
+  },
+  {
+    outlet: 'Wealthsimple on X',
+    title: 'And the winner is in! — Christian, from Quebec',
+    link: 'https://x.com/Wealthsimple/status/2022749314749968653',
+    id: 'press4',
+  },
+]
 
 export const WORK_EXPERIENCE: WorkExperience[] = [
   {
@@ -126,10 +181,26 @@ export const ALBUMS: Album[] = [
 ]
 
 export const ARTWORKS: Artwork[] = [
-  { title: '', artist: '', image: '/artwork/artwork-3.jpg' },
-  { title: '', artist: '', image: '/artwork/artwork-5.jpg' },
-  { title: '', artist: '', image: '/artwork/artwork-6.jpg' },
-  { title: '', artist: '', image: '/artwork/artwork-7.jpg' },
+  {
+    title: 'The Wood Engraver',
+    artist: 'Charles Frederic Ulrich',
+    image: '/artwork/artwork-3.jpg',
+  },
+  {
+    title: 'In the Forge',
+    artist: 'Stanisław Lentz',
+    image: '/artwork/artwork-5.jpg',
+  },
+  {
+    title: 'The Port of New York by Moonlight',
+    artist: 'Edward Moran',
+    image: '/artwork/artwork-6.jpg',
+  },
+  {
+    title: 'A Venetian Onion Seller',
+    artist: 'John Singer Sargent',
+    image: '/artwork/artwork-7.jpg',
+  },
 ]
 
 export const EMAIL = 'nicholasjamesrocha@gmail.com'
