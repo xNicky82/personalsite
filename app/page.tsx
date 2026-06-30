@@ -139,37 +139,6 @@ export default function Personal() {
         variants={VARIANTS_SECTION}
         transition={TRANSITION_SECTION}
       >
-        <h3 className="mb-5 text-lg font-medium">Press</h3>
-        <div className="flex flex-col space-y-2">
-          {PRESS.map((item) => (
-            <a
-              className="relative overflow-hidden rounded-2xl bg-zinc-300/30 p-[1px] dark:bg-zinc-600/30"
-              href={item.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              key={item.id}
-            >
-              <Spotlight
-                className="from-zinc-900 via-zinc-800 to-zinc-700 blur-2xl dark:from-zinc-100 dark:via-zinc-200 dark:to-zinc-50"
-                size={64}
-              />
-              <div className="relative h-full w-full rounded-[15px] bg-white p-4 dark:bg-zinc-950">
-                <p className="text-xs tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-                  {item.outlet}
-                </p>
-                <h4 className="mt-1 font-normal dark:text-zinc-100">
-                  {item.title}
-                </h4>
-              </div>
-            </a>
-          ))}
-        </div>
-      </motion.section>
-
-      <motion.section
-        variants={VARIANTS_SECTION}
-        transition={TRANSITION_SECTION}
-      >
         <h3 className="mb-5 text-lg font-medium">Work Experience</h3>
         <div className="flex flex-col space-y-2">
           {WORK_EXPERIENCE.map((job) => (
@@ -244,6 +213,37 @@ export default function Personal() {
         variants={VARIANTS_SECTION}
         transition={TRANSITION_SECTION}
       >
+        <h3 className="mb-5 text-lg font-medium">Press</h3>
+        <div className="flex flex-col space-y-2">
+          {PRESS.map((item) => (
+            <a
+              className="relative overflow-hidden rounded-2xl bg-zinc-300/30 p-[1px] dark:bg-zinc-600/30"
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              key={item.id}
+            >
+              <Spotlight
+                className="from-zinc-900 via-zinc-800 to-zinc-700 blur-2xl dark:from-zinc-100 dark:via-zinc-200 dark:to-zinc-50"
+                size={64}
+              />
+              <div className="relative h-full w-full rounded-[15px] bg-white p-4 dark:bg-zinc-950">
+                <p className="text-xs tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  {item.outlet}
+                </p>
+                <h4 className="mt-1 font-normal dark:text-zinc-100">
+                  {item.title}
+                </h4>
+              </div>
+            </a>
+          ))}
+        </div>
+      </motion.section>
+
+      <motion.section
+        variants={VARIANTS_SECTION}
+        transition={TRANSITION_SECTION}
+      >
         <h3 className="mb-5 text-lg font-medium">Albums on rotation</h3>
         <Carousel itemClassName="w-32 sm:w-36" autoScrollInterval={2000}>
           {ALBUMS.map((album) => (
@@ -281,7 +281,7 @@ export default function Personal() {
         transition={TRANSITION_SECTION}
       >
         <h3 className="mb-5 text-lg font-medium">Artwork I like</h3>
-        <Carousel itemClassName="w-24 sm:w-32" autoScrollInterval={2000}>
+        <Carousel itemClassName="w-20 sm:w-28" autoScrollInterval={2000}>
           {ARTWORKS.map((art) => (
             <div key={art.image} className="space-y-2">
               <div className="aspect-[3/4] overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200/60 ring-inset dark:bg-zinc-900 dark:ring-zinc-800/60">
