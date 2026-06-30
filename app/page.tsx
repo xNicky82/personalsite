@@ -2,7 +2,15 @@
 import { motion } from 'motion/react'
 import { Spotlight } from '@/components/ui/spotlight'
 import { Magnetic } from '@/components/ui/magnetic'
-import { WORK_EXPERIENCE, EMAIL, SOCIAL_LINKS } from './data'
+import { Carousel } from '@/components/ui/carousel'
+import { SlidingNumber } from '@/components/ui/sliding-number'
+import {
+  WORK_EXPERIENCE,
+  EMAIL,
+  SOCIAL_LINKS,
+  ALBUMS,
+  ARTWORKS,
+} from './data'
 
 const VARIANTS_CONTAINER = {
   hidden: { opacity: 0 },
@@ -69,12 +77,15 @@ export default function Personal() {
         variants={VARIANTS_SECTION}
         transition={TRANSITION_SECTION}
       >
-        <div className="flex-1">
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Growth lead at Spellbook. Previously at Pine, where I helped scale
-            mortgages under administration from $90M to $2B. Before that, I
-            founded a spatial design studio and spent time on operations at
-            Tesla.
+        <div className="flex-1 space-y-4 text-zinc-600 dark:text-zinc-400">
+          <p>
+            Growth Hacker at Spellbook. Previously at Pine, where I helped
+            scale mortgages under administration from $90 million to{' '}
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              $<SlidingNumber to={2.5} decimals={1} /> Billion
+            </span>
+            . Before that, I founded a spatial design studio and spent time on
+            operations at Tesla.
           </p>
         </div>
       </motion.section>
@@ -115,6 +126,78 @@ export default function Personal() {
             </a>
           ))}
         </div>
+      </motion.section>
+
+      <motion.section
+        variants={VARIANTS_SECTION}
+        transition={TRANSITION_SECTION}
+      >
+        <h3 className="mb-5 text-lg font-medium">Albums on rotation</h3>
+        <Carousel itemClassName="w-32 sm:w-36">
+          {ALBUMS.map((album) => (
+            <div key={album.cover} className="space-y-2">
+              <div className="aspect-square overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200/60 ring-inset dark:bg-zinc-900 dark:ring-zinc-800/60">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={album.cover}
+                  alt={album.title || 'Album cover'}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              {(album.title || album.artist) && (
+                <div className="px-1">
+                  {album.title && (
+                    <p className="truncate text-sm text-zinc-900 dark:text-zinc-100">
+                      {album.title}
+                    </p>
+                  )}
+                  {album.artist && (
+                    <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                      {album.artist}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </Carousel>
+      </motion.section>
+
+      <motion.section
+        variants={VARIANTS_SECTION}
+        transition={TRANSITION_SECTION}
+      >
+        <h3 className="mb-5 text-lg font-medium">Artwork I like</h3>
+        <Carousel itemClassName="w-44 sm:w-52">
+          {ARTWORKS.map((art) => (
+            <div key={art.image} className="space-y-2">
+              <div className="aspect-[3/4] overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200/60 ring-inset dark:bg-zinc-900 dark:ring-zinc-800/60">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={art.image}
+                  alt={art.title}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              {(art.title || art.artist) && (
+                <div className="px-1">
+                  {art.title && (
+                    <p className="truncate text-sm text-zinc-900 dark:text-zinc-100">
+                      {art.title}
+                    </p>
+                  )}
+                  {art.artist && (
+                    <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                      {art.artist}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </Carousel>
       </motion.section>
 
       <motion.section
