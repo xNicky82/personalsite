@@ -80,9 +80,9 @@ export default function Personal() {
         <div className="flex-1 space-y-4 text-zinc-600 dark:text-zinc-400">
           <p>
             Growth Hacker at Spellbook. Previously at Pine, where I helped
-            scale mortgages under administration from $90 million to{' '}
+            scale mortgages under administration from $90,000,000 to{' '}
             <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              $<SlidingNumber to={2.5} decimals={1} /> Billion
+              $<SlidingNumber from={90000000} to={2500000000} duration={3} />
             </span>
             . Before that, I founded a spatial design studio and spent time on
             operations at Tesla.
