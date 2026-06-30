@@ -206,7 +206,7 @@ export default function Personal() {
         transition={TRANSITION_SECTION}
       >
         <h3 className="mb-5 text-lg font-medium">Artwork I like</h3>
-        <Carousel itemClassName="w-44 sm:w-52" autoScrollInterval={2000}>
+        <Carousel itemClassName="w-24 sm:w-32" autoScrollInterval={2000}>
           {ARTWORKS.map((art) => (
             <div key={art.image} className="space-y-2">
               <div className="aspect-[3/4] overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200/60 ring-inset dark:bg-zinc-900 dark:ring-zinc-800/60">
