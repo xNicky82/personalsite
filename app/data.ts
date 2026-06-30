@@ -100,7 +100,7 @@ export const WORK_EXPERIENCE: WorkExperience[] = [
   },
   {
     company: 'Pine',
-    title: 'Growth Hacker',
+    title: 'Growth Lead',
     start: '2024',
     end: '2026',
     link: 'https://www.pine.ca',
