@@ -126,9 +126,7 @@ export const ALBUMS: Album[] = [
 ]
 
 export const ARTWORKS: Artwork[] = [
-  { title: '', artist: '', image: '/artwork/artwork-2.jpg' },
   { title: '', artist: '', image: '/artwork/artwork-3.jpg' },
-  { title: '', artist: '', image: '/artwork/artwork-4.jpg' },
   { title: '', artist: '', image: '/artwork/artwork-5.jpg' },
   { title: '', artist: '', image: '/artwork/artwork-6.jpg' },
   { title: '', artist: '', image: '/artwork/artwork-7.jpg' },
