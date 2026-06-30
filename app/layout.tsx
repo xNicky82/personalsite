@@ -12,16 +12,43 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://nim-rose.vercel.app/'),
+  metadataBase: new URL('https://nicholasrocha.com'),
   alternates: {
-    canonical: '/'
+    canonical: '/',
   },
   title: {
-    default: 'Nicholas Rocha',
-    template: '%s | Nicholas Rocha'
+    default: 'Nicholas Rocha — Growth Hacker',
+    template: '%s | Nicholas Rocha',
   },
-  description: 'Personal site of Nicholas Rocha — Growth at Spellbook.',
-};
+  description:
+    'Personal site of Nicholas Rocha — Growth Hacker at Spellbook. Previously at Pine, Nordexa, and Tesla.',
+  keywords: ['Nicholas Rocha', 'Growth Hacker', 'Spellbook', 'Pine', 'Growth'],
+  authors: [{ name: 'Nicholas Rocha' }],
+  openGraph: {
+    type: 'website',
+    url: 'https://nicholasrocha.com',
+    title: 'Nicholas Rocha — Growth Hacker',
+    description:
+      'Personal site of Nicholas Rocha — Growth Hacker at Spellbook.',
+    siteName: 'Nicholas Rocha',
+    images: [
+      {
+        url: '/headshot.jpg',
+        width: 1200,
+        height: 1200,
+        alt: 'Nicholas Rocha',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Nicholas Rocha — Growth Hacker',
+    description:
+      'Personal site of Nicholas Rocha — Growth Hacker at Spellbook.',
+    images: ['/headshot.jpg'],
+    creator: '@NicholasJRocha',
+  },
+}
 
 const geist = Geist({
   variable: '--font-geist',
