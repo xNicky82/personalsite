@@ -10,6 +10,8 @@ import {
   bedsLabel,
   daysUntilAvailable,
   formatRent,
+  horizonFraction,
+  interestCount,
   monthsUntilAvailable,
 } from './data'
 
@@ -25,12 +27,14 @@ type PreOffer = {
 type PreOffers = Record<string, PreOffer>
 
 const STORAGE_KEY = 'prelist.preoffers.v1'
+const SAVED_KEY = 'prelist.watchlist.v1'
 
 type Sort = 'availability' | 'rent-asc' | 'rent-desc'
 
 export default function PrelistPage() {
   const [mounted, setMounted] = useState(false)
   const [offers, setOffers] = useState<PreOffers>({})
+  const [saved, setSaved] = useState<string[]>([])
 
   // filters
   const [q, setQ] = useState('')
@@ -38,18 +42,22 @@ export default function PrelistPage() {
   const [beds, setBeds] = useState('any')
   const [maxRent, setMaxRent] = useState('any')
   const [windowMonths, setWindowMonths] = useState('any')
+  const [savedOnly, setSavedOnly] = useState(false)
   const [sort, setSort] = useState<Sort>('availability')
 
   // ui
   const [view, setView] = useState<'browse' | 'offers'>('browse')
   const [active, setActive] = useState<Listing | null>(null)
+  const [detail, setDetail] = useState<Listing | null>(null)
 
-  // hydrate saved pre-offers
+  // hydrate saved pre-offers + watchlist
   useEffect(() => {
     setMounted(true)
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) setOffers(JSON.parse(raw))
+      const rawSaved = localStorage.getItem(SAVED_KEY)
+      if (rawSaved) setSaved(JSON.parse(rawSaved))
     } catch {
       // ignore corrupt storage
     }
@@ -59,10 +67,11 @@ export default function PrelistPage() {
     if (!mounted) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(offers))
+      localStorage.setItem(SAVED_KEY, JSON.stringify(saved))
     } catch {
       // ignore quota / private-mode errors
     }
-  }, [offers, mounted])
+  }, [offers, saved, mounted])
 
   const results = useMemo(() => {
     const query = q.trim().toLowerCase()
@@ -84,6 +93,7 @@ export default function PrelistPage() {
         const m = monthsUntilAvailable(l)
         if (m > Number(windowMonths)) return false
       }
+      if (savedOnly && !saved.includes(l.id)) return false
       return true
     })
 
@@ -93,10 +103,11 @@ export default function PrelistPage() {
       return daysUntilAvailable(a) - daysUntilAvailable(b)
     })
     return list
-  }, [q, neighborhood, beds, maxRent, windowMonths, sort])
+  }, [q, neighborhood, beds, maxRent, windowMonths, savedOnly, saved, sort])
 
   const offerCount = Object.keys(offers).length
   const offerListings = LISTINGS.filter((l) => offers[l.id])
+  const savedCount = saved.length
 
   function submitOffer(listing: Listing, offer: PreOffer) {
     setOffers((prev) => ({ ...prev, [listing.id]: offer }))
@@ -111,12 +122,19 @@ export default function PrelistPage() {
     })
   }
 
+  function toggleSaved(id: string) {
+    setSaved((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
+
   const resetFilters = () => {
     setQ('')
     setNeighborhood('any')
     setBeds('any')
     setMaxRent('any')
     setWindowMonths('any')
+    setSavedOnly(false)
     setSort('availability')
   }
 
@@ -235,7 +253,21 @@ export default function PrelistPage() {
               <span>
                 {results.length} unit{results.length === 1 ? '' : 's'}
               </span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSavedOnly((s) => !s)}
+                  aria-pressed={savedOnly}
+                  className={[
+                    'inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium transition-colors',
+                    savedOnly
+                      ? 'border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900'
+                      : 'border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800',
+                  ].join(' ')}
+                >
+                  <Heart filled={savedOnly} />
+                  Saved{savedCount > 0 ? ` (${savedCount})` : ''}
+                </button>
                 <Select
                   value={sort}
                   onChange={(v) => setSort(v as Sort)}
@@ -270,7 +302,10 @@ export default function PrelistPage() {
                     key={l.id}
                     listing={l}
                     hasOffer={Boolean(offers[l.id])}
+                    saved={saved.includes(l.id)}
                     onOffer={() => setActive(l)}
+                    onOpen={() => setDetail(l)}
+                    onToggleSave={() => toggleSaved(l.id)}
                   />
                 ))}
               </div>
@@ -286,6 +321,17 @@ export default function PrelistPage() {
           />
         )}
       </div>
+
+      {detail && (
+        <DetailDialog
+          listing={detail}
+          hasOffer={Boolean(offers[detail.id])}
+          saved={saved.includes(detail.id)}
+          onClose={() => setDetail(null)}
+          onOffer={() => setActive(detail)}
+          onToggleSave={() => toggleSaved(detail.id)}
+        />
+      )}
 
       {active && (
         <OfferDialog
@@ -365,14 +411,35 @@ function StatusPill({ listing }: { listing: Listing }) {
 function ListingCard({
   listing,
   hasOffer,
+  saved,
   onOffer,
+  onOpen,
+  onToggleSave,
 }: {
   listing: Listing
   hasOffer: boolean
+  saved: boolean
   onOffer: () => void
+  onOpen: () => void
+  onToggleSave: () => void
 }) {
+  const stop = (fn: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation()
+    fn()
+  }
   return (
-    <article className="flex flex-col rounded-lg border border-zinc-200 p-4 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600">
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen()
+        }
+      }}
+      className="flex cursor-pointer flex-col rounded-lg border border-zinc-200 p-4 transition-colors hover:border-zinc-400 focus:outline-none focus-visible:border-zinc-900 dark:border-zinc-800 dark:hover:border-zinc-600 dark:focus-visible:border-zinc-100"
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-medium leading-tight">{listing.building}</h3>
@@ -394,7 +461,9 @@ function ListingCard({
         <Spec k="View" v={listing.view} />
       </dl>
 
-      <div className="mt-3 flex flex-wrap gap-1.5 text-xs text-zinc-500">
+      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
+        <span>{interestCount(listing)} interested</span>
+        <span aria-hidden>·</span>
         {listing.parking && <Tag>Parking</Tag>}
         {listing.pets && <Tag>Pet-friendly</Tag>}
       </div>
@@ -409,20 +478,74 @@ function ListingCard({
             {availabilityDetail(listing)}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onOffer}
-          className={[
-            'rounded-md px-3.5 py-2 text-sm font-medium transition-colors',
-            hasOffer
-              ? 'border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
-              : 'bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200',
-          ].join(' ')}
-        >
-          {hasOffer ? 'Edit pre-offer' : 'Pre-offer'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={stop(onToggleSave)}
+            aria-label={saved ? 'Remove from saved' : 'Save unit'}
+            aria-pressed={saved}
+            className="rounded-md border border-zinc-300 p-2 text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          >
+            <Heart filled={saved} />
+          </button>
+          <button
+            type="button"
+            onClick={stop(onOffer)}
+            className={[
+              'rounded-md px-3.5 py-2 text-sm font-medium transition-colors',
+              hasOffer
+                ? 'border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                : 'bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200',
+            ].join(' ')}
+          >
+            {hasOffer ? 'Edit pre-offer' : 'Pre-offer'}
+          </button>
+        </div>
       </div>
     </article>
+  )
+}
+
+function Heart({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+    </svg>
+  )
+}
+
+function Timeline({ listing }: { listing: Listing }) {
+  const now = daysUntilAvailable(listing) <= 0
+  const pct = Math.round(horizonFraction(listing) * 100)
+  return (
+    <div>
+      <div className="relative mt-2 h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
+        <div
+          className="absolute left-0 top-0 h-full rounded-full bg-zinc-900 dark:bg-zinc-100"
+          style={{ width: `${Math.max(pct, 4)}%` }}
+        />
+        <div
+          className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-zinc-900 dark:border-zinc-950 dark:bg-zinc-100"
+          style={{ left: `${pct}%` }}
+        />
+      </div>
+      <div className="mt-1.5 flex justify-between text-xs text-zinc-500">
+        <span>Today</span>
+        <span className="font-medium text-zinc-700 dark:text-zinc-300">
+          {now ? 'Available now' : availabilityLabel(listing)}
+        </span>
+        <span>12 mo</span>
+      </div>
+    </div>
   )
 }
 
@@ -440,6 +563,121 @@ function Tag({ children }: { children: React.ReactNode }) {
     <span className="rounded border border-zinc-200 px-1.5 py-0.5 dark:border-zinc-800">
       {children}
     </span>
+  )
+}
+
+/* --------------------------------- detail --------------------------------- */
+
+function DetailDialog({
+  listing,
+  hasOffer,
+  saved,
+  onClose,
+  onOffer,
+  onToggleSave,
+}: {
+  listing: Listing
+  hasOffer: boolean
+  saved: boolean
+  onClose: () => void
+  onOffer: () => void
+  onToggleSave: () => void
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const queuePosition = interestCount(listing) + 1
+
+  return (
+    <div
+      className="fixed inset-0 z-[55] flex items-end justify-center bg-zinc-900/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 sm:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">{listing.building}</h2>
+              <StatusPill listing={listing} />
+            </div>
+            <p className="text-sm text-zinc-500">
+              {listing.neighborhood} · Unit {listing.unit} ·{' '}
+              {bedsLabel(listing.beds)} · {listing.baths} bath
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            ✕
+          </button>
+        </div>
+
+        <p className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          {listing.blurb}
+        </p>
+
+        {/* availability timeline */}
+        <div className="mt-5 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <div className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+            Estimated availability
+          </div>
+          <Timeline listing={listing} />
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            {availabilityDetail(listing)}.{' '}
+            {interestCount(listing)} others are watching — pre-offer now and
+            you&apos;d be{' '}
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              #{queuePosition} in line
+            </span>{' '}
+            when it opens.
+          </p>
+        </div>
+
+        {/* specs */}
+        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          <Spec k="Rent" v={`${formatRent(listing.rent)}/mo`} />
+          <Spec k="Size" v={`${listing.sqft} sqft`} />
+          <Spec k="Floor" v={`${listing.floor}`} />
+          <Spec k="View" v={listing.view} />
+          <Spec k="Parking" v={listing.parking ? 'Yes' : 'No'} />
+          <Spec k="Pets" v={listing.pets ? 'Allowed' : 'No'} />
+        </dl>
+
+        {/* actions */}
+        <div className="mt-6 flex gap-2">
+          <button
+            type="button"
+            onClick={onToggleSave}
+            aria-pressed={saved}
+            className={[
+              'inline-flex items-center justify-center gap-1.5 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors',
+              saved
+                ? 'border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100'
+                : 'border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800',
+            ].join(' ')}
+          >
+            <Heart filled={saved} />
+            {saved ? 'Saved' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={onOffer}
+            className="flex-1 rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            {hasOffer ? 'Edit pre-offer' : 'Pre-offer on this unit'}
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -664,6 +902,9 @@ function OffersView({
                   </span>{' '}
                   · move-in {o.moveIn}
                   {o.note ? ` · “${o.note}”` : ''}
+                </p>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  #{interestCount(l) + 1} in line when the lease ends
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">

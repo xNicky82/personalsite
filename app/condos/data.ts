@@ -412,6 +412,25 @@ export function bedsLabel(beds: number): string {
   return beds === 0 ? 'Studio' : `${beds} bed`
 }
 
+// Stable pseudo-count of how many others have already registered interest in a
+// unit. Derived from the id so it never shifts between renders or SSR/client.
+export function interestCount(listing: Listing): number {
+  let h = 0
+  for (let i = 0; i < listing.id.length; i++) {
+    h = (h * 31 + listing.id.charCodeAt(i)) & 0xffff
+  }
+  return 2 + (h % 12) // 2–13 others
+}
+
+// Fraction (0–1) of a fixed 12-month horizon at which the unit frees up.
+// Used to place the marker on the availability timeline; clamps at the ends.
+export function horizonFraction(listing: Listing): number {
+  const months = monthsUntilAvailable(listing)
+  if (months <= 0) return 0
+  if (months >= 12) return 1
+  return months / 12
+}
+
 export function formatRent(rent: number): string {
   return '$' + rent.toLocaleString('en-CA')
 }
