@@ -206,11 +206,9 @@ export function PrelistApp({
               </p>
               {source === 'sample' && (
                 <p className="mt-3 text-xs text-zinc-500">
-                  Showing sample data. Set a{' '}
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                    REPLIERS_API_KEY
-                  </span>{' '}
-                  to load live MLS listings.
+                  Demo data — synthetic units seeded from real Toronto condo
+                  buildings. Live MLS loads automatically once a production
+                  Repliers key returns full inventory.
                 </p>
               )}
             </section>
@@ -388,7 +386,7 @@ function SourceBadge({ source }: { source: Source }) {
           source === 'live' ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-zinc-400',
         ].join(' ')}
       />
-      {source === 'live' ? 'Live MLS' : 'Sample'}
+      {source === 'live' ? 'Live MLS' : 'Demo data'}
     </span>
   )
 }

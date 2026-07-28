@@ -99,329 +99,168 @@ export function interestCount(listing: Listing): number {
   return 2 + (h % 12) // 2–13 others
 }
 
-// --- sample fallback data ---------------------------------------------------
+// --- demo dataset -----------------------------------------------------------
+//
+// Used when there's no Repliers key or the API returns too little to feel real.
+// It is SYNTHETIC — rents, unit mixes and lease histories are generated — but
+// seeded from REAL Toronto condo buildings and their public addresses, and
+// calibrated to realistic market rents. Generation is deterministic (seeded
+// PRNG, no Math.random) and availability is expressed relative to a `nowMs`
+// passed in by the server, so the data stays fresh without hydration drift.
+// MLS numbers are intentionally null — these are not real listings.
 
 const DAY = 1000 * 60 * 60 * 24
-const SAMPLE_ANCHOR = new Date('2026-07-28T00:00:00')
 
-type SampleSeed = Omit<
-  Listing,
-  'daysUntil' | 'available' | 'mls' | 'source' | 'sqft' | 'floor' | 'view'
-> & { sqft: number; floor: number; view: string }
+type Building = {
+  name: string
+  address: string
+  neighborhood: string
+  base: number // baseline 1-bed monthly rent for this building
+  floors: number
+  views: string[]
+}
 
-function buildSample(seed: SampleSeed): Listing {
-  const end = new Date(seed.leaseEnd + 'T00:00:00')
-  const daysUntil = Math.round((end.getTime() - SAMPLE_ANCHOR.getTime()) / DAY)
-  return {
-    ...seed,
-    daysUntil,
-    available: daysUntil <= 0,
-    mls: null,
-    source: 'sample',
+// Real Toronto condo buildings (public names + approximate addresses).
+const BUILDINGS: Building[] = [
+  { name: 'One Bloor East', address: '1 Bloor St E', neighborhood: 'Yorkville', base: 2950, floors: 75, views: ['East / Lake', 'City / South', 'North'] },
+  { name: 'Casa III', address: '42 Charles St E', neighborhood: 'Yorkville', base: 2900, floors: 56, views: ['South / Skyline', 'West', 'East'] },
+  { name: 'X Condos', address: '110 Charles St E', neighborhood: 'Yorkville', base: 2850, floors: 44, views: ['City', 'Park', 'South'] },
+  { name: 'The Florian', address: '88 Davenport Rd', neighborhood: 'Yorkville', base: 3200, floors: 26, views: ['Rosedale', 'City', 'West'] },
+  { name: 'Aura', address: '386 Yonge St', neighborhood: 'Downtown', base: 2650, floors: 78, views: ['City / South', 'North', 'West'] },
+  { name: 'Ïce Condos', address: '12 York St', neighborhood: 'Financial District', base: 2800, floors: 67, views: ['Lake', 'CN Tower', 'City'] },
+  { name: 'Maple Leaf Square', address: '55 Bremner Blvd', neighborhood: 'Financial District', base: 2850, floors: 54, views: ['Lake', 'Stadium', 'City'] },
+  { name: 'Backstage', address: '21 Scott St', neighborhood: 'St. Lawrence', base: 2750, floors: 36, views: ['St. Lawrence', 'Lake', 'East'] },
+  { name: 'The Berczy', address: '55 Front St E', neighborhood: 'St. Lawrence', base: 2700, floors: 13, views: ['St. Lawrence', 'Courtyard', 'City'] },
+  { name: 'L Tower', address: '8 The Esplanade', neighborhood: 'St. Lawrence', base: 2900, floors: 58, views: ['Lake', 'City', 'East'] },
+  { name: 'Bisha Residences', address: '80 Blue Jays Way', neighborhood: 'Entertainment District', base: 2900, floors: 44, views: ['CN Tower', 'City', 'South'] },
+  { name: 'Festival Tower', address: '80 John St', neighborhood: 'Entertainment District', base: 2950, floors: 42, views: ['City', 'CN Tower', 'West'] },
+  { name: 'Fashion House', address: '560 King St W', neighborhood: 'King West', base: 2750, floors: 15, views: ['North', 'City', 'South'] },
+  { name: 'Charlie Condos', address: '8 Charlotte St', neighborhood: 'King West', base: 2800, floors: 34, views: ['South / Lake', 'City', 'West'] },
+  { name: 'M5V', address: '375 King St W', neighborhood: 'King West', base: 2850, floors: 40, views: ['CN Tower', 'City', 'South'] },
+  { name: 'Parade', address: '231 Fort York Blvd', neighborhood: 'CityPlace', base: 2550, floors: 40, views: ['South / Lake', 'North / City', 'West'] },
+  { name: 'Spectra', address: '209 Fort York Blvd', neighborhood: 'CityPlace', base: 2500, floors: 39, views: ['Lake', 'City', 'Park'] },
+  { name: 'Library District', address: '39 Queens Wharf Rd', neighborhood: 'CityPlace', base: 2550, floors: 26, views: ['West', 'Lake', 'City'] },
+  { name: 'Liberty Central', address: '51 East Liberty St', neighborhood: 'Liberty Village', base: 2500, floors: 30, views: ['Courtyard', 'City', 'West'] },
+  { name: 'Liberty Market Tower', address: '165 East Liberty St', neighborhood: 'Liberty Village', base: 2550, floors: 26, views: ['City', 'South', 'West'] },
+  { name: 'Battery Park', address: '15 Western Battery Rd', neighborhood: 'Liberty Village', base: 2450, floors: 21, views: ['City', 'West', 'Courtyard'] },
+  { name: 'Clear Spirit', address: '70 Distillery Lane', neighborhood: 'Distillery District', base: 2700, floors: 40, views: ['Distillery', 'Lake', 'City'] },
+  { name: 'Pure Spirit', address: '68 Distillery Lane', neighborhood: 'Distillery District', base: 2650, floors: 31, views: ['Cobblestone', 'City', 'East'] },
+  { name: 'Pier 27', address: '29 Queens Quay E', neighborhood: 'Harbourfront', base: 3000, floors: 35, views: ['Direct Lake', 'Marina', 'City'] },
+  { name: 'Aqualina at Bayside', address: '261 Queens Quay E', neighborhood: 'Harbourfront', base: 2900, floors: 13, views: ['Lake', 'Marina', 'City'] },
+  { name: 'Monde', address: '12 Bonnycastle St', neighborhood: 'Harbourfront', base: 2950, floors: 44, views: ['Lake', 'City', 'East'] },
+  { name: 'Waterclub', address: '10 Navy Wharf Ct', neighborhood: 'Harbourfront', base: 2800, floors: 40, views: ['Lake', 'CN Tower', 'City'] },
+  { name: 'Bohemian Embassy', address: '1171 Queen St W', neighborhood: 'Queen West', base: 2500, floors: 12, views: ['Trinity Bellwoods', 'North / City', 'West'] },
+  { name: 'The Carnaby', address: '1245 Dupont St', neighborhood: 'Queen West', base: 2400, floors: 8, views: ['City', 'Courtyard', 'West'] },
+  { name: 'Riverside Square', address: '90 Broadview Ave', neighborhood: 'Leslieville', base: 2450, floors: 27, views: ['Skyline', 'East', 'City'] },
+  { name: 'The Taylor', address: '629 King St E', neighborhood: 'Leslieville', base: 2400, floors: 9, views: ['East', 'Courtyard', 'City'] },
+  { name: 'E Condos', address: '8 Eglinton Ave E', neighborhood: 'Yonge & Eglinton', base: 2500, floors: 58, views: ['South / Skyline', 'North', 'East'] },
+  { name: 'Art Shoppe Lofts', address: '2200 Yonge St', neighborhood: 'Yonge & Eglinton', base: 2550, floors: 39, views: ['City', 'South', 'West'] },
+  { name: 'Bianca', address: '420 Dupont St', neighborhood: 'The Annex', base: 2600, floors: 9, views: ['Casa Loma', 'City', 'North'] },
+  { name: 'Emerald Park', address: '4788 Yonge St', neighborhood: 'North York', base: 2300, floors: 44, views: ['City', 'North', 'East'] },
+  { name: 'Hullmark Centre', address: '4789 Yonge St', neighborhood: 'North York', base: 2350, floors: 45, views: ['City', 'South', 'West'] },
+]
+
+// mulberry32 — deterministic PRNG so the dataset is identical on every render.
+function mulberry32(seed: number) {
+  let a = seed
+  return function () {
+    a |= 0
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
 
-const SAMPLE_SEEDS: SampleSeed[] = [
-  {
-    id: 'lv-mode-1204',
-    building: 'The Mode',
-    neighborhood: 'Liberty Village',
-    unit: '1204',
-    beds: 1,
-    baths: 1,
-    sqft: 545,
-    floor: 12,
-    rent: 2550,
-    leaseEnd: '2026-07-15',
-    parking: false,
-    view: 'West / CN Tower',
-    blurb: 'Bright corner 1-bed with floor-to-ceiling windows over Liberty.',
-  },
-  {
-    id: 'lv-liberty-central-808',
-    building: 'Liberty Central',
-    neighborhood: 'Liberty Village',
-    unit: '808',
-    beds: 2,
-    baths: 2,
-    sqft: 820,
-    floor: 8,
-    rent: 3600,
-    leaseEnd: '2026-09-30',
-    parking: true,
-    view: 'Courtyard',
-    blurb: 'Split 2-bed 2-bath, rare parking, steps from the GO.',
-  },
-  {
-    id: 'kw-thompson-2201',
-    building: 'Thompson Residences',
-    neighborhood: 'King West',
-    unit: '2201',
-    beds: 1,
-    baths: 1,
-    sqft: 610,
-    floor: 22,
-    rent: 2950,
-    leaseEnd: '2026-08-31',
-    parking: false,
-    view: 'South / Lake',
-    blurb: '1-bed + den in the heart of King West nightlife, rooftop pool.',
-  },
-  {
-    id: 'kw-fashion-house-1710',
-    building: 'Fashion House',
-    neighborhood: 'King West',
-    unit: '1710',
-    beds: 0,
-    baths: 1,
-    sqft: 430,
-    floor: 17,
-    rent: 2200,
-    leaseEnd: '2027-01-31',
-    parking: false,
-    view: 'North',
-    blurb: 'Efficient studio, exposed concrete, walk everywhere.',
-  },
-  {
-    id: 'yk-1-bloor-4505',
-    building: 'One Bloor East',
-    neighborhood: 'Yorkville',
-    unit: '4505',
-    beds: 2,
-    baths: 2,
-    sqft: 910,
-    floor: 45,
-    rent: 5200,
-    leaseEnd: '2026-11-15',
-    parking: true,
-    view: 'East / Lake',
-    blurb: 'High-floor 2-bed at Yonge & Bloor, direct subway access.',
-  },
-  {
-    id: 'yk-museum-house-902',
-    building: 'Museum House',
-    neighborhood: 'Yorkville',
-    unit: '902',
-    beds: 3,
-    baths: 3,
-    sqft: 1720,
-    floor: 9,
-    rent: 8900,
-    leaseEnd: '2027-03-31',
-    parking: true,
-    view: 'ROM / Park',
-    blurb: 'Boutique 3-bed overlooking the ROM, chef kitchen, 2 parking.',
-  },
-  {
-    id: 'dd-gooderham-511',
-    building: 'The Gooderham',
-    neighborhood: 'Distillery District',
-    unit: '511',
-    beds: 1,
-    baths: 1,
-    sqft: 580,
-    floor: 5,
-    rent: 2700,
-    leaseEnd: '2026-10-01',
-    parking: false,
-    view: 'Cobblestone',
-    blurb: 'Loft-style 1-bed in the Distillery, brick-and-beam character.',
-  },
-  {
-    id: 'cp-parade-3308',
-    building: 'Parade',
-    neighborhood: 'CityPlace',
-    unit: '3308',
-    beds: 1,
-    baths: 1,
-    sqft: 560,
-    floor: 33,
-    rent: 2650,
-    leaseEnd: '2026-07-01',
-    parking: false,
-    view: 'South / Lake',
-    blurb: 'Lake-view 1-bed above the CityPlace dog park, gym + pool.',
-  },
-  {
-    id: 'cp-panorama-1102',
-    building: 'Panorama',
-    neighborhood: 'CityPlace',
-    unit: '1102',
-    beds: 2,
-    baths: 2,
-    sqft: 790,
-    floor: 11,
-    rent: 3450,
-    leaseEnd: '2026-12-31',
-    parking: true,
-    view: 'North / City',
-    blurb: 'Family-friendly 2-bed, parking + locker, next to the Well.',
-  },
-  {
-    id: 'le-sync-706',
-    building: 'SYNC Lofts',
-    neighborhood: 'Leslieville',
-    unit: '706',
-    beds: 1,
-    baths: 1,
-    sqft: 640,
-    floor: 7,
-    rent: 2600,
-    leaseEnd: '2026-08-15',
-    parking: false,
-    view: 'East',
-    blurb: 'Hard loft with 10ft ceilings, walk to Queen East cafés.',
-  },
-  {
-    id: 'an-annex-lofts-403',
-    building: 'The Annex Lofts',
-    neighborhood: 'The Annex',
-    unit: '403',
-    beds: 2,
-    baths: 1,
-    sqft: 880,
-    floor: 4,
-    rent: 3800,
-    leaseEnd: '2027-02-28',
-    parking: false,
-    view: 'Tree-lined',
-    blurb: 'Character 2-bed loft near U of T and the subway.',
-  },
-  {
-    id: 'fd-1-york-3901',
-    building: '1 York',
-    neighborhood: 'Financial District',
-    unit: '3901',
-    beds: 2,
-    baths: 2,
-    sqft: 950,
-    floor: 39,
-    rent: 5600,
-    leaseEnd: '2026-09-15',
-    parking: true,
-    view: 'Lake / Islands',
-    blurb: 'Corner 2-bed on the waterfront edge of the core, PATH access.',
-  },
-  {
-    id: 'fd-lstlawrence-1205',
-    building: 'The Berczy',
-    neighborhood: 'Financial District',
-    unit: '1205',
-    beds: 1,
-    baths: 1,
-    sqft: 600,
-    floor: 12,
-    rent: 2850,
-    leaseEnd: '2027-05-31',
-    parking: false,
-    view: 'St. Lawrence',
-    blurb: '1-bed steps from St. Lawrence Market and Union.',
-  },
-  {
-    id: 'fy-library-district-1808',
-    building: 'Library District',
-    neighborhood: 'Fort York',
-    unit: '1808',
-    beds: 1,
-    baths: 1,
-    sqft: 575,
-    floor: 18,
-    rent: 2500,
-    leaseEnd: '2026-08-01',
-    parking: false,
-    view: 'West',
-    blurb: 'Quiet 1-bed by the Bentway, easy Gardiner + waterfront access.',
-  },
-  {
-    id: 'qw-westside-509',
-    building: 'Westside Gallery Lofts',
-    neighborhood: 'Queen West',
-    unit: '509',
-    beds: 0,
-    baths: 1,
-    sqft: 490,
-    floor: 5,
-    rent: 2300,
-    leaseEnd: '2026-10-31',
-    parking: false,
-    view: 'Graffiti Alley',
-    blurb: 'Artist studio-loft in the heart of West Queen West.',
-  },
-  {
-    id: 'qw-bohemian-1201',
-    building: 'Bohemian Embassy',
-    neighborhood: 'Queen West',
-    unit: '1201',
-    beds: 2,
-    baths: 2,
-    sqft: 830,
-    floor: 12,
-    rent: 3700,
-    leaseEnd: '2027-04-30',
-    parking: true,
-    view: 'North / City',
-    blurb: 'Bright 2-bed with a big terrace over Trinity Bellwoods.',
-  },
-  {
-    id: 'ye-e-condos-3402',
-    building: 'E Condos',
-    neighborhood: 'Yonge & Eglinton',
-    unit: '3402',
-    beds: 1,
-    baths: 1,
-    sqft: 555,
-    floor: 34,
-    rent: 2750,
-    leaseEnd: '2026-11-30',
-    parking: false,
-    view: 'South / Skyline',
-    blurb: 'High-floor 1-bed on the new Crosstown LRT.',
-  },
-  {
-    id: 'ye-montgomery-1509',
-    building: 'Montgomery Square',
-    neighborhood: 'Yonge & Eglinton',
-    unit: '1509',
-    beds: 3,
-    baths: 2,
-    sqft: 1180,
-    floor: 15,
-    rent: 5400,
-    leaseEnd: '2027-06-30',
-    parking: true,
-    view: 'East',
-    blurb: 'Rare midtown 3-bed for families, two parking spots.',
-  },
-  {
-    id: 'hf-water-club-2607',
-    building: 'Waterclub',
-    neighborhood: 'Harbourfront',
-    unit: '2607',
-    beds: 2,
-    baths: 2,
-    sqft: 900,
-    floor: 26,
-    rent: 4100,
-    leaseEnd: '2026-09-01',
-    parking: true,
-    view: 'Direct Lake',
-    blurb: 'Unobstructed lake-view 2-bed, resort-style amenities.',
-  },
-  {
-    id: 'hf-pier-27-1004',
-    building: 'Pier 27',
-    neighborhood: 'Harbourfront',
-    unit: '1004',
-    beds: 1,
-    baths: 1,
-    sqft: 660,
-    floor: 10,
-    rent: 3100,
-    leaseEnd: '2027-01-15',
-    parking: true,
-    view: 'Marina',
-    blurb: 'Glassy 1-bed + den right on the water at Yonge & Queens Quay.',
-  },
+function isoFromMs(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10)
+}
+
+function slug(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+}
+
+const BED_FACTOR = [0.82, 1, 1.42, 1.95] // studio, 1, 2, 3
+const TYP_SQFT = [450, 590, 880, 1270]
+const PARK_CHANCE = [0.1, 0.3, 0.6, 0.85]
+
+const FEATURES = [
+  'floor-to-ceiling windows',
+  'a walk-out balcony',
+  '9ft exposed-concrete ceilings',
+  'a renovated kitchen',
+  'ensuite laundry',
+  'a private terrace',
+  'integrated appliances',
+  'a spa-inspired bath',
 ]
 
-export const SAMPLE_LISTINGS: Listing[] = SAMPLE_SEEDS.map(buildSample)
+// Build the demo listings relative to `nowMs`. Deterministic given the seed.
+export function buildDemoListings(nowMs: number): Listing[] {
+  const rng = mulberry32(0x9e3779b9)
+  const listings: Listing[] = []
+
+  for (const b of BUILDINGS) {
+    const unitsHere = 3 + Math.floor(rng() * 4) // 3–6 per building
+    for (let i = 0; i < unitsHere; i++) {
+      const r = rng()
+      const beds = r < 0.12 ? 0 : r < 0.55 ? 1 : r < 0.85 ? 2 : 3
+      const den = beds >= 1 && rng() < 0.3
+      const baths = beds === 0 ? 1 : beds === 1 ? 1 : beds === 2 ? (rng() < 0.7 ? 2 : 1) : 2
+
+      const sqftBase = [
+        380 + rng() * 150,
+        500 + rng() * 190,
+        720 + rng() * 340,
+        1050 + rng() * 470,
+      ][beds]
+      const sqft = Math.round(sqftBase / 5) * 5
+
+      const floor = 2 + Math.floor(rng() * (b.floors - 2))
+      const unitOnFloor = 1 + Math.floor(rng() * 8)
+      const unit = `${floor}${String(unitOnFloor).padStart(2, '0')}`
+
+      const sqftDelta = (sqft - TYP_SQFT[beds]) * 0.6
+      const noise = rng() * 220 - 110
+      const rent = Math.max(
+        1800,
+        Math.round((b.base * BED_FACTOR[beds] + sqftDelta + noise) / 25) * 25,
+      )
+
+      const parking = rng() < PARK_CHANCE[beds]
+      const view = b.views[Math.floor(rng() * b.views.length)]
+
+      // ~18% available now; the rest spread across the next 3 weeks–12 months.
+      const av = rng()
+      const offsetDays =
+        av < 0.18 ? -Math.floor(rng() * 26) : 20 + Math.floor(rng() * 345)
+      const leaseEndMs = nowMs + offsetDays * DAY
+
+      const bedText = beds === 0 ? 'Studio' : `${beds}-bed${den ? ' + den' : ''}`
+      const feature = FEATURES[Math.floor(rng() * FEATURES.length)]
+      const blurb = `${bedText} at ${b.name} (${b.address}) in ${b.neighborhood}, with ${feature}.`
+
+      listings.push({
+        id: `${slug(b.name)}-${unit}`,
+        building: b.name,
+        neighborhood: b.neighborhood,
+        unit,
+        beds,
+        baths,
+        sqft,
+        floor,
+        rent,
+        leaseEnd: isoFromMs(leaseEndMs),
+        daysUntil: offsetDays,
+        available: offsetDays <= 0,
+        parking,
+        view,
+        blurb,
+        mls: null,
+        source: 'sample',
+      })
+    }
+  }
+
+  return listings
+}

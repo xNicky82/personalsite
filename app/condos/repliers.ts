@@ -12,11 +12,14 @@
 //     anniversary if that date is already in the past). This is what powers the
 //     "pre-offer before it lists" idea against real inventory.
 
-import { SAMPLE_LISTINGS, type Listing } from './data'
+import { buildDemoListings, type Listing } from './data'
 
 const BASE = 'https://api.repliers.io/listings'
 const DAY = 1000 * 60 * 60 * 24
 const TIMEOUT_MS = 9000
+// Below this many live results we prefer the richer demo dataset (a sandbox key
+// returns only a handful of generic listings, which makes the app feel empty).
+const MIN_LIVE = 8
 
 type Raw = Record<string, unknown>
 
@@ -153,11 +156,13 @@ export type FetchResult = {
 }
 
 export async function fetchListings(): Promise<FetchResult> {
+  const now = Date.now()
+  const demo: FetchResult = { listings: buildDemoListings(now), source: 'sample' }
+
   const key = process.env.REPLIERS_API_KEY
-  if (!key) return { listings: SAMPLE_LISTINGS, source: 'sample' }
+  if (!key) return demo
 
   try {
-    const now = Date.now()
 
     // Leased units → estimated future availability. Retry without the city
     // filter if the (sandbox) dataset has nothing in Toronto.
@@ -186,10 +191,12 @@ export async function fetchListings(): Promise<FetchResult> {
       listings.push(l)
     }
 
-    if (listings.length === 0) return { listings: SAMPLE_LISTINGS, source: 'sample' }
+    // A sandbox key returns only a few generic rows; fall back to the richer
+    // demo dataset unless live inventory is substantial enough to stand alone.
+    if (listings.length < MIN_LIVE) return demo
     return { listings, source: 'live' }
   } catch {
     // Network error, bad key, timeout, unexpected shape — degrade gracefully.
-    return { listings: SAMPLE_LISTINGS, source: 'sample' }
+    return demo
   }
 }
