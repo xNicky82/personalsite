@@ -63,25 +63,8 @@ export function ContractsApp({
           </span>
         </header>
 
-        {/* intro */}
-        <section className="py-8">
-          <h1 className="max-w-3xl text-2xl leading-snug font-semibold tracking-tight sm:text-3xl">
-            Fifty real contracts, one from each of America’s biggest public
-            companies.
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            The top 50 U.S. companies by revenue that are listed on a public
-            market, each paired with a substantive agreement pulled from its SEC
-            EDGAR filings — credit agreements, mergers, indentures, executive
-            contracts and more. Open any company to jump straight to the
-            document on EDGAR; signatories are added from each signature page as
-            they’re confirmed. A ready-made bench of example contracts for
-            review and testing.
-          </p>
-        </section>
-
         {/* featured example */}
-        <FeaturedCard company={featured} />
+        <FeaturedCard company={featured} className="mt-8" />
 
         {/* filters */}
         <section className="mt-8 grid grid-cols-1 gap-3 border-y border-zinc-200 py-4 sm:grid-cols-3 dark:border-zinc-800">
@@ -208,6 +191,99 @@ function ExternalLinkIcon() {
   )
 }
 
+function DownloadIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  )
+}
+
+function Spinner() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-3.5 w-3.5 animate-spin"
+      fill="none"
+      aria-hidden
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth={3}
+        className="opacity-25"
+      />
+      <path
+        d="M21 12a9 9 0 0 0-9-9"
+        stroke="currentColor"
+        strokeWidth={3}
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+// Fetches the server-rendered PDF and triggers a browser download, with a
+// loading state (Chromium cold starts can take a few seconds) and inline error.
+function DownloadPdfButton({ company }: { company: Company }) {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+
+  async function download() {
+    if (status === 'loading') return
+    setStatus('loading')
+    try {
+      const res = await fetch(
+        `/contracts/download?ticker=${encodeURIComponent(company.ticker)}`,
+      )
+      if (!res.ok) throw new Error(String(res.status))
+      const blob = await res.blob()
+      const href = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = href
+      a.download = `${company.ticker}-${company.contract.type}`
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(href)
+      setStatus('idle')
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <button
+        type="button"
+        onClick={download}
+        disabled={status === 'loading'}
+        className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3.5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      >
+        {status === 'loading' ? <Spinner /> : <DownloadIcon />}
+        {status === 'loading' ? 'Preparing…' : 'Download PDF'}
+      </button>
+      {status === 'error' && (
+        <span className="text-xs text-red-500">Couldn’t generate — try again</span>
+      )}
+    </span>
+  )
+}
+
 function CompanyRow({
   company,
   open,
@@ -282,6 +358,7 @@ function ContractPanel({ company }: { company: Company }) {
             {contract.urlVerified ? 'Open contract on EDGAR' : 'Open on EDGAR'}
             <ExternalLinkIcon />
           </a>
+          <DownloadPdfButton company={company} />
           <a
             href={edgarFilingsUrl(company.cik)}
             target="_blank"
@@ -360,10 +437,18 @@ function SignatoryList({
   )
 }
 
-function FeaturedCard({ company }: { company: Company }) {
+function FeaturedCard({
+  company,
+  className,
+}: {
+  company: Company
+  className?: string
+}) {
   const { contract } = company
   return (
-    <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <section
+      className={`rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/40${className ? ` ${className}` : ''}`}
+    >
       <div className="flex items-center gap-2">
         <span className="rounded-full bg-zinc-900 px-2.5 py-0.5 text-xs font-medium text-white dark:bg-white dark:text-zinc-900">
           Featured example
@@ -384,15 +469,18 @@ function FeaturedCard({ company }: { company: Company }) {
           {contract.filedAs} · {contract.filedDate}
         </span>
       </div>
-      <a
-        href={contract.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
-      >
-        Open on EDGAR
-        <ExternalLinkIcon />
-      </a>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <a
+          href={contract.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
+        >
+          Open on EDGAR
+          <ExternalLinkIcon />
+        </a>
+        <DownloadPdfButton company={company} />
+      </div>
     </section>
   )
 }
