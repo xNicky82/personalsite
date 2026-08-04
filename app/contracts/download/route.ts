@@ -17,6 +17,14 @@ const ALL: Company[] = [FEATURED, ...COMPANIES]
 const EDGAR_UA =
   'nicholasrocha.com EDGAR Contracts (contact: nicholas.rocha@spellbook.legal)'
 
+// Full Chromium browser pack (binary + shared libraries) matching the installed
+// @sparticuz/chromium-min version. Fetched at runtime by chromium-min so the
+// serverless function doesn't need to bundle any binary/library files. Override
+// with CHROMIUM_PACK_URL if the pack is ever mirrored elsewhere.
+const CHROMIUM_PACK_URL =
+  process.env.CHROMIUM_PACK_URL ||
+  'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
+
 function findByTicker(ticker: string): Company | undefined {
   const t = ticker.trim().toUpperCase()
   return ALL.find((c) => c.ticker.toUpperCase() === t)
@@ -48,12 +56,12 @@ async function launchBrowser() {
   const puppeteer = await import('puppeteer-core')
 
   if (isServerless) {
-    const chromium = (await import('@sparticuz/chromium')).default
+    const chromium = (await import('@sparticuz/chromium-min')).default
     return puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: true,
+      executablePath: await chromium.executablePath(CHROMIUM_PACK_URL),
+      headless: chromium.headless,
     })
   }
 
