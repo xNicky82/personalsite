@@ -240,15 +240,20 @@ function Spinner() {
 // loading state (Chromium cold starts can take a few seconds) and inline error.
 function DownloadPdfButton({ company }: { company: Company }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [error, setError] = useState<string>('')
 
   async function download() {
     if (status === 'loading') return
     setStatus('loading')
+    setError('')
     try {
       const res = await fetch(
         `/contracts/download?ticker=${encodeURIComponent(company.ticker)}`,
       )
-      if (!res.ok) throw new Error(String(res.status))
+      if (!res.ok) {
+        const body = await res.text().catch(() => '')
+        throw new Error(body || `Request failed (${res.status})`)
+      }
       const blob = await res.blob()
       const href = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -261,7 +266,8 @@ function DownloadPdfButton({ company }: { company: Company }) {
       a.remove()
       URL.revokeObjectURL(href)
       setStatus('idle')
-    } catch {
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong')
       setStatus('error')
     }
   }
@@ -278,7 +284,12 @@ function DownloadPdfButton({ company }: { company: Company }) {
         {status === 'loading' ? 'Preparing…' : 'Download PDF'}
       </button>
       {status === 'error' && (
-        <span className="text-xs text-red-500">Couldn’t generate — try again</span>
+        <span
+          className="max-w-xs truncate text-xs text-red-500"
+          title={error}
+        >
+          {error || 'Couldn’t generate — try again'}
+        </span>
       )}
     </span>
   )
