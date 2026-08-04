@@ -56,6 +56,16 @@ async function launchBrowser() {
   const puppeteer = await import('puppeteer-core')
 
   if (isServerless) {
+    // @sparticuz/chromium only unpacks its bundled shared libraries
+    // (libnss3.so, libnspr4.so, …) and adds them to LD_LIBRARY_PATH when it
+    // recognizes a Lambda runtime. Vercel runs on Lambda but doesn't always
+    // expose AWS_LAMBDA_JS_RUNTIME, so we set it *before* importing the module
+    // (the import is deferred to here specifically so this runs first).
+    // Without it the browser binary extracts but its libraries don't, and the
+    // launch fails with "libnss3.so: cannot open shared object file".
+    if (!process.env.AWS_LAMBDA_JS_RUNTIME) {
+      process.env.AWS_LAMBDA_JS_RUNTIME = 'nodejs20.x'
+    }
     const chromium = (await import('@sparticuz/chromium-min')).default
     return puppeteer.launch({
       args: chromium.args,
