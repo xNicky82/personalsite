@@ -10,6 +10,7 @@
 import {
   type Job,
   SAMPLE_JOBS,
+  decodeEntities,
   looksLegal,
   prettyType,
   toBlurb,
@@ -23,6 +24,11 @@ type Raw = Record<string, unknown>
 function str(v: unknown): string {
   if (v === null || v === undefined) return ''
   return String(v).trim()
+}
+// str() plus HTML-entity decoding — for display fields (title, company, tags…)
+// that boards sometimes deliver encoded, e.g. "Legal &amp; Compliance".
+function text(v: unknown): string {
+  return decodeEntities(str(v))
 }
 function num(v: unknown): number {
   const n = typeof v === 'number' ? v : parseFloat(str(v).replace(/[^0-9.]/g, ''))
@@ -62,18 +68,18 @@ async function fromRemotive(): Promise<Job[]> {
     .map((r): Job | null => {
       const j = r as Raw
       const url = str(j.url)
-      const title = str(j.title)
+      const title = text(j.title)
       if (!url || !title) return null
-      const salary = str(j.salary)
+      const salary = text(j.salary)
       return {
         id: `remotive-${str(j.id) || url}`,
         title,
-        company: str(j.company_name) || 'Unknown',
+        company: text(j.company_name) || 'Unknown',
         description: toBlurb(str(j.description)),
         salary: salary || null,
-        location: str(j.candidate_required_location) || 'Remote',
+        location: text(j.candidate_required_location) || 'Remote',
         type: prettyType(str(j.job_type)),
-        tags: arr(j.tags).map(str).filter(Boolean).slice(0, 4),
+        tags: arr(j.tags).map(text).filter(Boolean).slice(0, 4),
         url,
         source: 'Remotive',
         postedAt: str(j.publication_date) || null,
@@ -91,9 +97,9 @@ async function fromJobicy(): Promise<Job[]> {
     .map((r): Job | null => {
       const j = r as Raw
       const url = str(j.url)
-      const title = str(j.jobTitle)
+      const title = text(j.jobTitle)
       if (!url || !title) return null
-      const industries = arr(j.jobIndustry).map(str).join(' ')
+      const industries = arr(j.jobIndustry).map(text).join(' ')
       // Guard against the source ignoring the industry filter.
       if (!looksLegal(`${title} ${industries}`)) return null
 
@@ -110,12 +116,12 @@ async function fromJobicy(): Promise<Job[]> {
       return {
         id: `jobicy-${str(j.id) || url}`,
         title,
-        company: str(j.companyName) || 'Unknown',
+        company: text(j.companyName) || 'Unknown',
         description: toBlurb(str(j.jobExcerpt) || str(j.jobDescription)),
         salary,
-        location: str(j.jobGeo) || 'Remote',
+        location: text(j.jobGeo) || 'Remote',
         type: prettyType(types[0]),
-        tags: arr(j.jobIndustry).map(str).filter(Boolean).slice(0, 4),
+        tags: arr(j.jobIndustry).map(text).filter(Boolean).slice(0, 4),
         url,
         source: 'Jobicy',
         postedAt: str(j.pubDate) || null,

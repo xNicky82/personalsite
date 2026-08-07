@@ -42,16 +42,41 @@ export function looksLegal(text: string): boolean {
   return LEGAL_KEYWORDS.some((k) => t.includes(k))
 }
 
+// Named HTML entities we expect to see in job-board text.
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  rsquo: '’',
+  lsquo: '‘',
+  ldquo: '“',
+  rdquo: '”',
+  ndash: '–',
+  mdash: '—',
+  hellip: '…',
+}
+
+// Decode HTML entities (named + numeric) into their characters. Job boards
+// often double-encode, so tags like "Legal &amp; Compliance" arrive literally.
+export function decodeEntities(input: string): string {
+  return input.replace(/&(#x?[0-9a-fA-F]+|\w+);/g, (m, e: string) => {
+    if (e[0] === '#') {
+      const code =
+        e[1] === 'x' || e[1] === 'X'
+          ? parseInt(e.slice(2), 16)
+          : parseInt(e.slice(1), 10)
+      return Number.isFinite(code) ? String.fromCodePoint(code) : m
+    }
+    return NAMED_ENTITIES[e] ?? m
+  })
+}
+
 // Collapse HTML/markup to a short single-line plain-text blurb.
 export function toBlurb(html: string, max = 200): string {
-  const text = html
-    .replace(/<[^>]*>/g, ' ') // strip tags
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&#39;|&rsquo;|&#8217;/g, '’')
-    .replace(/&quot;|&ldquo;|&rdquo;/g, '"')
+  const text = decodeEntities(html.replace(/<[^>]*>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim()
   if (text.length <= max) return text

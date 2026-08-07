@@ -6,11 +6,9 @@ import type { Job } from './data'
 export function LegalJobsApp({
   jobs,
   source,
-  sources,
 }: {
   jobs: Job[]
   source: 'live' | 'sample'
-  sources: string[]
 }) {
   const [q, setQ] = useState('')
   const [board, setBoard] = useState('any')
@@ -50,11 +48,6 @@ export function LegalJobsApp({
               Legal roles from across the web, in one place
             </div>
           </a>
-          <span className="rounded-full border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:border-zinc-800">
-            {source === 'live'
-              ? `Live · ${sources.join(' + ')}`
-              : 'Sample data'}
-          </span>
         </header>
 
         {source === 'sample' && (

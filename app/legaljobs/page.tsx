@@ -5,6 +5,6 @@ import { LegalJobsApp } from './legaljobs-app'
 export const revalidate = 3600
 
 export default async function LegalJobsPage() {
-  const { jobs, source, sources } = await fetchJobs()
-  return <LegalJobsApp jobs={jobs} source={source} sources={sources} />
+  const { jobs, source } = await fetchJobs()
+  return <LegalJobsApp jobs={jobs} source={source} />
 }
