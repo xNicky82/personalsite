@@ -42,6 +42,34 @@ export function looksLegal(text: string): boolean {
   return LEGAL_KEYWORDS.some((k) => t.includes(k))
 }
 
+// Strong legal signals — used against a posting's TITLE on general job boards
+// (which aren't legal-scoped) so a dev role that merely mentions "compliance"
+// in its description doesn't slip in. Broader than the category-scoped sources.
+export const STRONG_LEGAL_TERMS = [
+  'attorney',
+  'lawyer',
+  'counsel', // general counsel, legal counsel, associate counsel…
+  'paralegal',
+  'solicitor',
+  'barrister',
+  'litigation',
+  'legal',
+  'compliance',
+  'law clerk',
+  'contract manager',
+  'contracts manager',
+  'legal ops',
+  'legal operations',
+  'privacy officer',
+  'regulatory affairs',
+  'general counsel',
+]
+
+export function titleLooksLegal(title: string): boolean {
+  const t = ` ${title.toLowerCase()} `
+  return STRONG_LEGAL_TERMS.some((k) => t.includes(k))
+}
+
 // Named HTML entities we expect to see in job-board text.
 const NAMED_ENTITIES: Record<string, string> = {
   amp: '&',
