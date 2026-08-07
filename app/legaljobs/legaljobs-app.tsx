@@ -47,9 +47,11 @@ const SAVED_KEY = 'legaljobs:saved'
 export function LegalJobsApp({
   jobs,
   source,
+  embed = false,
 }: {
   jobs: Job[]
   source: 'live' | 'sample'
+  embed?: boolean
 }) {
   const [roleLabel, setRoleLabel] = useState('') // '' = all legal roles
   const [loc, setLoc] = useState('')
@@ -103,25 +105,30 @@ export function LegalJobsApp({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-white font-[family-name:var(--font-geist)] text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
-      {/* top nav */}
-      <nav className="sticky top-0 z-10 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <a href="/" className="text-lg font-semibold tracking-tight">
-            Legal Jobs<span className="text-zinc-400">.</span>
-          </a>
-          <div className="flex items-center gap-6 text-sm text-zinc-600 dark:text-zinc-400">
-            <a href="#results" className="hover:text-zinc-900 dark:hover:text-zinc-100">
-              Find Jobs
+      {/* top nav — hidden when embedded in another site via ?embed=1 */}
+      {!embed && (
+        <nav className="sticky top-0 z-10 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
+            <a href="/" className="text-lg font-semibold tracking-tight">
+              Legal Jobs<span className="text-zinc-400">.</span>
             </a>
-            <a
-              href="/"
-              className="rounded-md border border-zinc-300 px-3 py-1.5 font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Portfolio
-            </a>
+            <div className="flex items-center gap-6 text-sm text-zinc-600 dark:text-zinc-400">
+              <a
+                href="#results"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100"
+              >
+                Find Jobs
+              </a>
+              <a
+                href="/"
+                className="rounded-md border border-zinc-300 px-3 py-1.5 font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                Portfolio
+              </a>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       <main className="mx-auto w-full max-w-6xl px-5 pt-8 pb-24">
         {/* natural-language search */}
