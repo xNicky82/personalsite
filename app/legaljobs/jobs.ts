@@ -21,6 +21,7 @@
 // Keyed sources are skipped silently when their env vars are absent, so the
 // board works out of the box and simply gets richer once keys are provided.
 
+import { COMPANY_BOARDS, type CompanyBoard } from './companies'
 import {
   type Job,
   SAMPLE_JOBS,
@@ -365,6 +366,123 @@ async function fromUSAJobs(): Promise<Job[]> {
     .filter((j): j is Job => j !== null)
 }
 
+/* --- Company ATS boards: top tech / AI companies, filtered to legal roles. */
+
+const COMPANY_SOURCE = 'Company site'
+
+function mapEmploymentType(s: string): string | null {
+  const map: Record<string, string> = {
+    FullTime: 'Full-time',
+    PartTime: 'Part-time',
+    Contract: 'Contract',
+    Intern: 'Internship',
+    Temporary: 'Temporary',
+  }
+  return map[s] ?? prettyType(s)
+}
+
+// Greenhouse: https://boards-api.greenhouse.io/v1/boards/<token>/jobs
+async function fromGreenhouse(token: string, name: string): Promise<Job[]> {
+  const json = await getJson(
+    `https://boards-api.greenhouse.io/v1/boards/${token}/jobs`,
+  )
+  return arr(asRecord(json).jobs)
+    .map((r): Job | null => {
+      const j = asRecord(r)
+      const url = str(j.absolute_url)
+      const title = text(j.title)
+      if (!url || !title || !titleLooksLegal(title)) return null
+      return {
+        id: `gh-${token}-${str(j.id) || url}`,
+        title,
+        company: name,
+        description: '',
+        salary: null,
+        location: text(asRecord(j.location).name) || 'See posting',
+        type: null,
+        tags: [],
+        url,
+        source: COMPANY_SOURCE,
+        postedAt: isoFromString(j.updated_at),
+      }
+    })
+    .filter((j): j is Job => j !== null)
+}
+
+// Ashby: https://api.ashbyhq.com/posting-api/job-board/<token>
+async function fromAshby(token: string, name: string): Promise<Job[]> {
+  const json = await getJson(
+    `https://api.ashbyhq.com/posting-api/job-board/${token}?includeCompensation=true`,
+  )
+  return arr(asRecord(json).jobs)
+    .map((r): Job | null => {
+      const j = asRecord(r)
+      const url = str(j.jobUrl) || str(j.applyUrl)
+      const title = text(j.title)
+      if (!url || !title || !titleLooksLegal(title)) return null
+      const comp = str(asRecord(j.compensation).compensationTierSummary)
+      return {
+        id: `ashby-${token}-${str(j.id) || url}`,
+        title,
+        company: name,
+        description: toBlurb(str(j.descriptionHtml) || str(j.descriptionPlain)),
+        salary: comp || null,
+        location: text(j.location) || (j.isRemote ? 'Remote' : 'See posting'),
+        type: mapEmploymentType(str(j.employmentType)),
+        tags: [text(j.team) || text(j.department)].filter(Boolean),
+        url,
+        source: COMPANY_SOURCE,
+        postedAt: isoFromString(j.publishedAt) ?? isoFromString(j.publishedDate),
+      }
+    })
+    .filter((j): j is Job => j !== null)
+}
+
+// Lever: https://api.lever.co/v0/postings/<token>?mode=json
+async function fromLever(token: string, name: string): Promise<Job[]> {
+  const json = await getJson(
+    `https://api.lever.co/v0/postings/${token}?mode=json`,
+  )
+  return arr(json)
+    .map((r): Job | null => {
+      const p = asRecord(r)
+      const url = str(p.hostedUrl) || str(p.applyUrl)
+      const title = text(p.text)
+      if (!url || !title || !titleLooksLegal(title)) return null
+      const cats = asRecord(p.categories)
+      return {
+        id: `lever-${token}-${str(p.id) || url}`,
+        title,
+        company: name,
+        description: toBlurb(str(p.descriptionPlain) || str(p.description)),
+        salary: null,
+        location: text(cats.location) || 'See posting',
+        type: prettyType(str(cats.commitment)),
+        tags: [text(cats.team)].filter(Boolean),
+        url,
+        source: COMPANY_SOURCE,
+        postedAt: isoFromUnix(p.createdAt),
+      }
+    })
+    .filter((j): j is Job => j !== null)
+}
+
+function fetchBoard(c: CompanyBoard): Promise<Job[]> {
+  if (c.ats === 'greenhouse') return fromGreenhouse(c.token, c.name)
+  if (c.ats === 'ashby') return fromAshby(c.token, c.name)
+  if (c.ats === 'lever') return fromLever(c.token, c.name)
+  return Promise.resolve([])
+}
+
+// Fan out across every company board and collect their legal roles. Each board
+// is independent, so one failing (renamed slug, ATS change) never blocks others.
+async function fromCompanyBoards(): Promise<Job[]> {
+  const settled = await Promise.allSettled(COMPANY_BOARDS.map(fetchBoard))
+  const out: Job[] = []
+  for (const r of settled) if (r.status === 'fulfilled') out.push(...r.value)
+  return out
+}
+
 export type FetchResult = {
   jobs: Job[]
   source: 'live' | 'sample'
@@ -404,6 +522,7 @@ export async function fetchJobs(): Promise<FetchResult> {
     ['RemoteOK', fromRemoteOK],
     ['Adzuna', fromAdzuna],
     ['USAJOBS', fromUSAJobs],
+    ['Company sites', fromCompanyBoards],
   ]
 
   const settled = await Promise.allSettled(sourceFns.map(([, fn]) => fn()))
