@@ -9,6 +9,11 @@ const nextConfig = {
   // libraries) is fetched at runtime from a URL by @sparticuz/chromium-min, so
   // nothing binary needs to be bundled or file-traced.
   serverExternalPackages: ['@sparticuz/chromium-min', 'puppeteer-core'],
+  // Serve the standalone GSAP motion demo (public/gsaptest.html) at a clean
+  // /gsaptest URL so it can be shared without the .html extension.
+  async rewrites() {
+    return [{ source: '/gsaptest', destination: '/gsaptest.html' }];
+  },
 };
 
 const withMDX = createMDX({
