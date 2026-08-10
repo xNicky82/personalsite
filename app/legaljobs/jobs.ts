@@ -38,6 +38,14 @@ function str(v: unknown): string {
 function text(v: unknown): string {
   return decodeEntities(str(v))
 }
+// Location strings from some ATSes join multiple cities with ";" — show them
+// comma-separated instead.
+function loc(v: unknown): string {
+  return text(v)
+    .replace(/\s*;\s*/g, ', ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
 function num(v: unknown): number {
   const n =
     typeof v === 'number' ? v : parseFloat(str(v).replace(/[^0-9.]/g, ''))
@@ -109,7 +117,7 @@ async function fromGreenhouse(c: CompanyBoard): Promise<Job[]> {
         company: c.name,
         description: '',
         salary: null,
-        location: text(asRecord(j.location).name) || 'See posting',
+        location: loc(asRecord(j.location).name) || 'See posting',
         type: null,
         tags: [],
         url,
@@ -139,7 +147,7 @@ async function fromAshby(c: CompanyBoard): Promise<Job[]> {
         company: c.name,
         description: toBlurb(str(j.descriptionHtml) || str(j.descriptionPlain)),
         salary: comp || null,
-        location: text(j.location) || (j.isRemote ? 'Remote' : 'See posting'),
+        location: loc(j.location) || (j.isRemote ? 'Remote' : 'See posting'),
         type: mapEmploymentType(str(j.employmentType)),
         tags: [text(j.team) || text(j.department)].filter(Boolean),
         url,
@@ -169,7 +177,7 @@ async function fromLever(c: CompanyBoard): Promise<Job[]> {
         company: c.name,
         description: toBlurb(str(p.descriptionPlain) || str(p.description)),
         salary: null,
-        location: text(cats.location) || 'See posting',
+        location: loc(cats.location) || 'See posting',
         type: prettyType(str(cats.commitment)),
         tags: [text(cats.team)].filter(Boolean),
         url,
