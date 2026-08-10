@@ -171,25 +171,11 @@ export function LegalJobsApp({
           </p>
         )}
 
-        {/* results header */}
+        {/* two-column: results + explore sidebar */}
         <div
           id="results"
-          className="mt-8 flex scroll-mt-20 items-baseline justify-between border-b border-zinc-200 pb-4 dark:border-zinc-800"
+          className="mt-8 grid scroll-mt-20 grid-cols-1 gap-10 border-t border-zinc-200 pt-8 lg:grid-cols-[1fr_300px] dark:border-zinc-800"
         >
-          <h2 className="text-base font-semibold tracking-tight sm:text-lg">
-            {heading}
-            <span className="font-normal text-zinc-400">{headingLoc}</span>
-          </h2>
-          <div className="text-right text-sm">
-            <div className="font-semibold">
-              Page {current} of {pages}
-            </div>
-            <div className="text-zinc-500">{filtered.length} results total</div>
-          </div>
-        </div>
-
-        {/* two-column: results + explore sidebar */}
-        <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_300px]">
           <div>
             {slice.length === 0 ? (
               <div className="rounded-xl border border-dashed border-zinc-300 py-16 text-center dark:border-zinc-700">
@@ -217,18 +203,30 @@ export function LegalJobsApp({
               </ul>
             )}
 
-            {pages > 1 && (
-              <Pagination
-                current={current}
-                pages={pages}
-                onChange={(p) => {
-                  setPage(p)
-                  document
-                    .getElementById('results')
-                    ?.scrollIntoView({ behavior: 'smooth' })
-                }}
-              />
-            )}
+            {/* summary + pagination, at the bottom of the listings */}
+            <div className="mt-10 flex flex-col gap-4 border-t border-zinc-200 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+              <div>
+                <div className="text-base font-semibold tracking-tight">
+                  {heading}
+                  <span className="font-normal text-zinc-400">{headingLoc}</span>
+                </div>
+                <div className="mt-0.5 text-sm text-zinc-500">
+                  {filtered.length} results total
+                </div>
+              </div>
+              {pages > 1 && (
+                <Pagination
+                  current={current}
+                  pages={pages}
+                  onChange={(p) => {
+                    setPage(p)
+                    document
+                      .getElementById('results')
+                      ?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                />
+              )}
+            </div>
           </div>
 
           <aside className="space-y-10">
@@ -444,7 +442,7 @@ function Pagination({
   onChange: (page: number) => void
 }) {
   return (
-    <div className="mt-8 flex items-center justify-between border-t border-zinc-200 pt-6 dark:border-zinc-800">
+    <div className="flex shrink-0 items-center gap-3">
       <button
         type="button"
         onClick={() => onChange(current - 1)}
@@ -453,7 +451,7 @@ function Pagination({
       >
         Previous
       </button>
-      <span className="text-sm text-zinc-500">
+      <span className="text-sm whitespace-nowrap text-zinc-500">
         Page {current} of {pages}
       </span>
       <button
