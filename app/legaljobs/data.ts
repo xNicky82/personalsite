@@ -18,6 +18,7 @@ export type Job = {
   url: string // link back to the original posting
   source: string // which board it came from, e.g. "Remotive"
   postedAt: string | null // ISO date string, or null
+  domain?: string | null // company web domain, used to fetch a logo
 }
 
 // Words that mark a posting as legal work. Used to keep general job boards on

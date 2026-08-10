@@ -93,9 +93,9 @@ function mapEmploymentType(s: string): string | null {
 /* --- Company ATS boards, filtered to legal roles. ------------------------- */
 
 // Greenhouse: https://boards-api.greenhouse.io/v1/boards/<token>/jobs
-async function fromGreenhouse(token: string, name: string): Promise<Job[]> {
+async function fromGreenhouse(c: CompanyBoard): Promise<Job[]> {
   const json = await getJson(
-    `https://boards-api.greenhouse.io/v1/boards/${token}/jobs`,
+    `https://boards-api.greenhouse.io/v1/boards/${c.token}/jobs`,
   )
   return arr(asRecord(json).jobs)
     .map((r): Job | null => {
@@ -104,9 +104,9 @@ async function fromGreenhouse(token: string, name: string): Promise<Job[]> {
       const title = text(j.title)
       if (!url || !title || !titleLooksLegal(title)) return null
       return {
-        id: `gh-${token}-${str(j.id) || url}`,
+        id: `gh-${c.token}-${str(j.id) || url}`,
         title,
-        company: name,
+        company: c.name,
         description: '',
         salary: null,
         location: text(asRecord(j.location).name) || 'See posting',
@@ -115,15 +115,16 @@ async function fromGreenhouse(token: string, name: string): Promise<Job[]> {
         url,
         source: COMPANY_SOURCE,
         postedAt: isoFromString(j.updated_at),
+        domain: c.domain,
       }
     })
     .filter((j): j is Job => j !== null)
 }
 
 // Ashby: https://api.ashbyhq.com/posting-api/job-board/<token>
-async function fromAshby(token: string, name: string): Promise<Job[]> {
+async function fromAshby(c: CompanyBoard): Promise<Job[]> {
   const json = await getJson(
-    `https://api.ashbyhq.com/posting-api/job-board/${token}?includeCompensation=true`,
+    `https://api.ashbyhq.com/posting-api/job-board/${c.token}?includeCompensation=true`,
   )
   return arr(asRecord(json).jobs)
     .map((r): Job | null => {
@@ -133,9 +134,9 @@ async function fromAshby(token: string, name: string): Promise<Job[]> {
       if (!url || !title || !titleLooksLegal(title)) return null
       const comp = str(asRecord(j.compensation).compensationTierSummary)
       return {
-        id: `ashby-${token}-${str(j.id) || url}`,
+        id: `ashby-${c.token}-${str(j.id) || url}`,
         title,
-        company: name,
+        company: c.name,
         description: toBlurb(str(j.descriptionHtml) || str(j.descriptionPlain)),
         salary: comp || null,
         location: text(j.location) || (j.isRemote ? 'Remote' : 'See posting'),
@@ -144,15 +145,16 @@ async function fromAshby(token: string, name: string): Promise<Job[]> {
         url,
         source: COMPANY_SOURCE,
         postedAt: isoFromString(j.publishedAt) ?? isoFromString(j.publishedDate),
+        domain: c.domain,
       }
     })
     .filter((j): j is Job => j !== null)
 }
 
 // Lever: https://api.lever.co/v0/postings/<token>?mode=json
-async function fromLever(token: string, name: string): Promise<Job[]> {
+async function fromLever(c: CompanyBoard): Promise<Job[]> {
   const json = await getJson(
-    `https://api.lever.co/v0/postings/${token}?mode=json`,
+    `https://api.lever.co/v0/postings/${c.token}?mode=json`,
   )
   return arr(json)
     .map((r): Job | null => {
@@ -162,9 +164,9 @@ async function fromLever(token: string, name: string): Promise<Job[]> {
       if (!url || !title || !titleLooksLegal(title)) return null
       const cats = asRecord(p.categories)
       return {
-        id: `lever-${token}-${str(p.id) || url}`,
+        id: `lever-${c.token}-${str(p.id) || url}`,
         title,
-        company: name,
+        company: c.name,
         description: toBlurb(str(p.descriptionPlain) || str(p.description)),
         salary: null,
         location: text(cats.location) || 'See posting',
@@ -173,15 +175,16 @@ async function fromLever(token: string, name: string): Promise<Job[]> {
         url,
         source: COMPANY_SOURCE,
         postedAt: isoFromUnix(p.createdAt),
+        domain: c.domain,
       }
     })
     .filter((j): j is Job => j !== null)
 }
 
 function fetchBoard(c: CompanyBoard): Promise<Job[]> {
-  if (c.ats === 'greenhouse') return fromGreenhouse(c.token, c.name)
-  if (c.ats === 'ashby') return fromAshby(c.token, c.name)
-  if (c.ats === 'lever') return fromLever(c.token, c.name)
+  if (c.ats === 'greenhouse') return fromGreenhouse(c)
+  if (c.ats === 'ashby') return fromAshby(c)
+  if (c.ats === 'lever') return fromLever(c)
   return Promise.resolve([])
 }
 

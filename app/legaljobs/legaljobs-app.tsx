@@ -313,6 +313,52 @@ export function LegalJobsApp({
 
 /* -------------------------------------------------------------------------- */
 
+// Company logo with graceful fallback: try Clearbit's logo, then the domain's
+// favicon, then finally the company's initials — so the tile always renders.
+function CompanyLogo({
+  name,
+  domain,
+}: {
+  name: string
+  domain: string | null
+}) {
+  const sources = domain
+    ? [
+        `https://logo.clearbit.com/${domain}`,
+        `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+      ]
+    : []
+  const [idx, setIdx] = useState(0)
+
+  const tile =
+    'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800'
+
+  if (idx >= sources.length) {
+    return (
+      <span
+        className={`${tile} text-sm font-semibold text-zinc-600 dark:text-zinc-300`}
+      >
+        {initials(name)}
+      </span>
+    )
+  }
+
+  return (
+    <span className={tile}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={sources[idx]}
+        alt={`${name} logo`}
+        width={40}
+        height={40}
+        loading="lazy"
+        className="h-full w-full object-contain"
+        onError={() => setIdx((i) => i + 1)}
+      />
+    </span>
+  )
+}
+
 function CompanyCard({
   company,
   roles,
@@ -328,9 +374,7 @@ function CompanyCard({
   return (
     <li className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
       <div className="flex items-center gap-3 border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-sm font-semibold text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
-          {initials(company)}
-        </span>
+        <CompanyLogo name={company} domain={roles[0]?.domain ?? null} />
         <div className="min-w-0">
           <div className="truncate font-semibold">{company}</div>
           <div className="text-xs text-zinc-500">
