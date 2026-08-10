@@ -104,7 +104,7 @@ export function LegalJobsApp({
   const headingLoc = loc ? ` · ${loc}` : ''
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-white font-[family-name:var(--font-geist)] text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-white font-[family-name:var(--font-sohne)] text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
       {/* top nav — hidden when embedded in another site via ?embed=1 */}
       {!embed && (
         <nav className="sticky top-0 z-10 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
@@ -131,6 +131,11 @@ export function LegalJobsApp({
       )}
 
       <main className="mx-auto w-full max-w-6xl px-5 pt-8 pb-24">
+        {/* page title */}
+        <h1 className="mb-8 text-3xl font-semibold tracking-tight sm:text-4xl">
+          Browse legal jobs in tech
+        </h1>
+
         {/* natural-language search */}
         <section className="flex flex-wrap items-center gap-x-3 gap-y-3 text-xl font-medium sm:text-2xl">
           <span>Show me</span>
@@ -192,10 +197,10 @@ export function LegalJobsApp({
           id="results"
           className="mt-8 flex scroll-mt-20 items-baseline justify-between border-b border-zinc-200 pb-4 dark:border-zinc-800"
         >
-          <h1 className="text-base font-semibold tracking-tight sm:text-lg">
+          <h2 className="text-base font-semibold tracking-tight sm:text-lg">
             {heading}
             <span className="font-normal text-zinc-400">{headingLoc}</span>
-          </h1>
+          </h2>
           <div className="text-right text-sm">
             <div className="font-semibold">
               Page {current} of {pages}
