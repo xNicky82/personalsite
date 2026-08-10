@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
+import { sohne } from './fonts'
 
 export const metadata: Metadata = {
-  title: 'Legal Jobs — remote legal roles from across the web',
+  title: 'Browse legal jobs in tech',
   description:
-    'An aggregated, minimal directory of legal job postings — attorney, counsel, paralegal, and compliance roles — each with a title, short description, salary where listed, and a link back to the original posting.',
+    'Legal roles — counsel, compliance, privacy, paralegal and more — pulled straight from the careers pages of top tech and AI companies, each linking back to the original posting.',
 }
 
 export default function LegalJobsLayout({
@@ -11,5 +12,5 @@ export default function LegalJobsLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return <div className={sohne.variable}>{children}</div>
 }
