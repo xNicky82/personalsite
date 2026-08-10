@@ -42,7 +42,6 @@ const PLACES = [
 ]
 
 const PAGE_SIZE = 15
-const SAVED_KEY = 'legaljobs:saved'
 
 export function LegalJobsApp({
   jobs,
@@ -56,26 +55,6 @@ export function LegalJobsApp({
   const [roleLabel, setRoleLabel] = useState('') // '' = all legal roles
   const [loc, setLoc] = useState('')
   const [page, setPage] = useState(1)
-  const [saved, setSaved] = useState<Set<string>>(new Set())
-
-  // Persist saved postings client-side — no account needed.
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(SAVED_KEY)
-      if (raw) setSaved(new Set(JSON.parse(raw) as string[]))
-    } catch {}
-  }, [])
-
-  const toggleSave = (id: string) =>
-    setSaved((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      try {
-        localStorage.setItem(SAVED_KEY, JSON.stringify([...next]))
-      } catch {}
-      return next
-    })
 
   const activeRole = useMemo(
     () => ROLES.find((r) => r.label === roleLabel) ?? null,
@@ -233,8 +212,6 @@ export function LegalJobsApp({
                     key={g.company}
                     company={g.company}
                     roles={g.roles}
-                    saved={saved}
-                    onToggleSave={toggleSave}
                   />
                 ))}
               </ul>
@@ -330,6 +307,7 @@ function CompanyLogo({
   const sources = domain
     ? [
         `https://logo.clearbit.com/${domain}`,
+        `https://icons.duckduckgo.com/ip3/${domain}.ico`,
         `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
       ]
     : []
@@ -356,7 +334,9 @@ function CompanyLogo({
         alt={`${name} logo`}
         width={40}
         height={40}
-        loading="lazy"
+        loading="eager"
+        decoding="async"
+        referrerPolicy="no-referrer"
         className="h-full w-full object-contain"
         onError={() => setIdx((i) => i + 1)}
       />
@@ -367,13 +347,9 @@ function CompanyLogo({
 function CompanyCard({
   company,
   roles,
-  saved,
-  onToggleSave,
 }: {
   company: string
   roles: Job[]
-  saved: Set<string>
-  onToggleSave: (id: string) => void
 }) {
   const boards = Array.from(new Set(roles.map((r) => r.source)))
   return (
@@ -391,27 +367,14 @@ function CompanyCard({
 
       <ul className="divide-y divide-zinc-100 dark:divide-zinc-900">
         {roles.map((job) => (
-          <RoleRow
-            key={job.id}
-            job={job}
-            isSaved={saved.has(job.id)}
-            onToggleSave={() => onToggleSave(job.id)}
-          />
+          <RoleRow key={job.id} job={job} />
         ))}
       </ul>
     </li>
   )
 }
 
-function RoleRow({
-  job,
-  isSaved,
-  onToggleSave,
-}: {
-  job: Job
-  isSaved: boolean
-  onToggleSave: () => void
-}) {
+function RoleRow({ job }: { job: Job }) {
   const posted = relativeDate(job.postedAt)
   return (
     <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
@@ -458,19 +421,6 @@ function RoleRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-2 self-start">
-        <button
-          type="button"
-          onClick={onToggleSave}
-          aria-pressed={isSaved}
-          className={[
-            'rounded-md border px-3.5 py-2 text-sm font-medium transition-colors',
-            isSaved
-              ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-              : 'border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800',
-          ].join(' ')}
-        >
-          {isSaved ? 'Saved' : 'Save'}
-        </button>
         <a
           href={job.url}
           target="_blank"
