@@ -302,19 +302,12 @@ function CompanyLogo({
   name: string
   domain: string | null
 }) {
-  const sources = domain
-    ? [
-        `https://logo.clearbit.com/${domain}`,
-        `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-        `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
-      ]
-    : []
-  const [idx, setIdx] = useState(0)
+  const [failed, setFailed] = useState(false)
 
   const tile =
     'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800'
 
-  if (idx >= sources.length) {
+  if (!domain || failed) {
     return (
       <span
         className={`${tile} text-sm font-semibold text-zinc-600 dark:text-zinc-300`}
@@ -324,19 +317,21 @@ function CompanyLogo({
     )
   }
 
+  // Same-origin, edge-cached proxy — reliable and fast after the first hit.
+  const src = `/legaljobs/logo?domain=${encodeURIComponent(domain)}&name=${encodeURIComponent(name)}`
+
   return (
     <span className={tile}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={sources[idx]}
+        src={src}
         alt={`${name} logo`}
         width={40}
         height={40}
         loading="eager"
         decoding="async"
-        referrerPolicy="no-referrer"
         className="h-full w-full object-contain"
-        onError={() => setIdx((i) => i + 1)}
+        onError={() => setFailed(true)}
       />
     </span>
   )
