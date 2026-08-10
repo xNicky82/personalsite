@@ -38,13 +38,20 @@ function str(v: unknown): string {
 function text(v: unknown): string {
   return decodeEntities(str(v))
 }
-// Location strings from some ATSes join multiple cities with ";" — show them
-// comma-separated instead.
+// Location strings from some ATSes join multiple cities with ";". Render each
+// "City, ST" group terminated with a period, e.g.
+//   "Denver, CO;San Francisco, CA" → "Denver, CO., San Francisco, CA."
+// Single locations (e.g. "Remote (US)") are left untouched.
 function loc(v: unknown): string {
-  return text(v)
-    .replace(/\s*;\s*/g, ', ')
+  const s = text(v)
     .replace(/\s{2,}/g, ' ')
     .trim()
+  if (!s.includes(';')) return s
+  const parts = s
+    .split(';')
+    .map((p) => p.trim())
+    .filter(Boolean)
+  return parts.join('., ') + '.'
 }
 function num(v: unknown): number {
   const n =
