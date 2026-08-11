@@ -43,6 +43,10 @@ const PLACES = [
 
 const PAGE_SIZE = 15
 
+// Brand accent (Spellbook orange). Centralized so the whole board's accent can
+// be changed — or the rebrand reverted — from one place.
+const ACCENT = '#FF4716'
+
 export function LegalJobsApp({
   jobs,
   source,
@@ -83,24 +87,21 @@ export function LegalJobsApp({
   const headingLoc = loc ? ` · ${loc}` : ''
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-white font-[family-name:var(--font-sohne)] text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black font-[family-name:var(--font-sohne)] text-white antialiased">
       {/* top nav — hidden when embedded in another site via ?embed=1 */}
       {!embed && (
-        <nav className="sticky top-0 z-10 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
+        <nav className="sticky top-0 z-10 border-b border-white/10 bg-black/90 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
             <a href="/" className="text-lg font-semibold tracking-tight">
-              Legal Jobs<span className="text-zinc-400">.</span>
+              Legal Jobs<span className="text-white/40">.</span>
             </a>
-            <div className="flex items-center gap-6 text-sm text-zinc-600 dark:text-zinc-400">
-              <a
-                href="#results"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
+            <div className="flex items-center gap-6 text-sm text-white/60">
+              <a href="#results" className="hover:text-white">
                 Find Jobs
               </a>
               <a
                 href="/"
-                className="rounded-md border border-zinc-300 px-3 py-1.5 font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="rounded-md border border-white/20 px-3 py-1.5 font-medium text-white transition-colors hover:bg-white/10"
               >
                 Portfolio
               </a>
@@ -110,10 +111,19 @@ export function LegalJobsApp({
       )}
 
       <main className="mx-auto w-full max-w-6xl px-5 pt-8 pb-24">
-        {/* page title */}
-        <h1 className="mb-8 text-3xl font-semibold tracking-tight sm:text-4xl">
-          Browse legal jobs in tech
-        </h1>
+        {/* headline */}
+        <header className="mb-10">
+          <h1 className="max-w-3xl text-4xl leading-[1.05] font-semibold tracking-tight sm:text-5xl">
+            Helping lawyers <span style={{ color: ACCENT }}>find careers</span>{' '}
+            in legal AI
+          </h1>
+          <div className="mt-4 flex items-center gap-2.5 text-sm text-white/60">
+            <span>Powered by</span>
+            <span className="text-lg">
+              <RedlineLogo />
+            </span>
+          </div>
+        </header>
 
         {/* natural-language search */}
         <section className="flex flex-wrap items-center gap-x-3 gap-y-3 text-xl font-medium sm:text-2xl">
@@ -123,7 +133,7 @@ export function LegalJobsApp({
               value={roleLabel}
               onChange={(e) => setRoleLabel(e.target.value)}
               aria-label="Role"
-              className="cursor-pointer appearance-none rounded-lg border border-zinc-300 bg-white py-2 pr-9 pl-4 text-base font-medium text-zinc-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-100"
+              className="cursor-pointer appearance-none rounded-lg border border-white/20 bg-white/5 py-2 pr-9 pl-4 text-base font-medium text-white focus:border-white focus:outline-none [&>option]:text-black"
             >
               <option value="">all legal</option>
               {ROLES.map((r) => (
@@ -141,14 +151,14 @@ export function LegalJobsApp({
               onChange={(e) => setLoc(e.target.value)}
               placeholder="Anywhere"
               aria-label="Location"
-              className="w-44 rounded-lg border border-zinc-300 bg-white py-2 pr-9 pl-4 text-base font-medium text-zinc-900 placeholder:font-normal placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-100"
+              className="w-44 rounded-lg border border-white/20 bg-white/5 py-2 pr-9 pl-4 text-base font-medium text-white placeholder:font-normal placeholder:text-white/40 focus:border-white focus:outline-none"
             />
             {loc && (
               <button
                 type="button"
                 onClick={() => setLoc('')}
                 aria-label="Clear location"
-                className="absolute right-2.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                className="absolute right-2.5 text-white/40 hover:text-white"
               >
                 <XIcon />
               </button>
@@ -157,14 +167,14 @@ export function LegalJobsApp({
           <button
             type="button"
             onClick={() => setPage(1)}
-            className="rounded-lg bg-zinc-900 px-5 py-2 text-base font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="rounded-lg bg-white px-5 py-2 text-base font-medium text-black transition-colors hover:bg-white/90"
           >
             Search
           </button>
         </section>
 
         {source === 'sample' && (
-          <p className="mt-6 rounded-lg border border-dashed border-zinc-300 px-4 py-3 text-xs leading-relaxed text-zinc-500 dark:border-zinc-700">
+          <p className="mt-6 rounded-lg border border-dashed border-white/20 px-4 py-3 text-xs leading-relaxed text-white/60">
             Live boards weren’t reachable, so these are representative sample
             roles linking to each company’s careers page. Live postings load
             automatically once a source responds.
@@ -174,12 +184,12 @@ export function LegalJobsApp({
         {/* two-column: results + explore sidebar */}
         <div
           id="results"
-          className="mt-8 grid scroll-mt-20 grid-cols-1 gap-10 border-t border-zinc-200 pt-8 lg:grid-cols-[1fr_300px] dark:border-zinc-800"
+          className="mt-8 grid scroll-mt-20 grid-cols-1 gap-10 border-t border-white/10 pt-8 lg:grid-cols-[1fr_300px]"
         >
           <div>
             {slice.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-zinc-300 py-16 text-center dark:border-zinc-700">
-                <p className="text-sm text-zinc-500">No postings match that.</p>
+              <div className="rounded-xl border border-dashed border-white/20 py-16 text-center">
+                <p className="text-sm text-white/60">No postings match that.</p>
                 <button
                   onClick={() => {
                     setRoleLabel('')
@@ -204,13 +214,13 @@ export function LegalJobsApp({
             )}
 
             {/* summary + pagination, at the bottom of the listings */}
-            <div className="mt-10 flex flex-col gap-4 border-t border-zinc-200 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+            <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="text-base font-semibold tracking-tight">
                   {heading}
-                  <span className="font-normal text-zinc-400">{headingLoc}</span>
+                  <span className="font-normal text-white/40">{headingLoc}</span>
                 </div>
-                <div className="mt-0.5 text-sm text-zinc-500">
+                <div className="mt-0.5 text-sm text-white/50">
                   {filtered.length} results total
                 </div>
               </div>
@@ -245,7 +255,7 @@ export function LegalJobsApp({
                           .getElementById('results')
                           ?.scrollIntoView({ behavior: 'smooth' })
                       }}
-                      className="text-left text-sm text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
+                      className="text-left text-sm text-white/60 underline-offset-4 hover:text-white hover:underline"
                     >
                       {r.label} Remote
                     </button>
@@ -269,7 +279,7 @@ export function LegalJobsApp({
                           .getElementById('results')
                           ?.scrollIntoView({ behavior: 'smooth' })
                       }}
-                      className="text-left text-sm text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
+                      className="text-left text-sm text-white/60 underline-offset-4 hover:text-white hover:underline"
                     >
                       Legal Jobs — {p}
                     </button>
@@ -280,7 +290,7 @@ export function LegalJobsApp({
           </aside>
         </div>
 
-        <footer className="mt-16 border-t border-zinc-200 pt-6 text-xs leading-relaxed text-zinc-500 dark:border-zinc-800">
+        <footer className="mt-16 border-t border-white/10 pt-6 text-xs leading-relaxed text-white/40">
           Postings are aggregated from public job boards and shown with their
           original title, a short description, salary where the source lists it,
           and a link back to the original posting. Listings and salaries are the
@@ -304,14 +314,13 @@ function CompanyLogo({
 }) {
   const [failed, setFailed] = useState(false)
 
+  // A light tile so brand logos (and the initials fallback) read on the dark card.
   const tile =
-    'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800'
+    'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white'
 
   if (!domain || failed) {
     return (
-      <span
-        className={`${tile} text-sm font-semibold text-zinc-600 dark:text-zinc-300`}
-      >
+      <span className={`${tile} text-sm font-semibold text-zinc-600`}>
         {initials(name)}
       </span>
     )
@@ -346,19 +355,19 @@ function CompanyCard({
 }) {
   const boards = Array.from(new Set(roles.map((r) => r.source)))
   return (
-    <li className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
-      <div className="flex items-center gap-3 border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+    <li className="overflow-hidden rounded-xl border border-white/10">
+      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
         <CompanyLogo name={company} domain={roles[0]?.domain ?? null} />
         <div className="min-w-0">
           <div className="truncate font-semibold">{company}</div>
-          <div className="text-xs text-zinc-500">
+          <div className="text-xs text-white/50">
             {roles.length} open {roles.length === 1 ? 'role' : 'roles'} ·{' '}
             {boards.join(', ')}
           </div>
         </div>
       </div>
 
-      <ul className="divide-y divide-zinc-100 dark:divide-zinc-900">
+      <ul className="divide-y divide-white/10">
         {roles.map((job) => (
           <RoleRow key={job.id} job={job} />
         ))}
@@ -382,32 +391,30 @@ function RoleRow({ job }: { job: Job }) {
             {job.title}
           </a>
           {job.type && (
-            <span className="inline-flex shrink-0 items-center rounded-full border border-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-800">
+            <span className="inline-flex shrink-0 items-center rounded-full border border-white/20 px-2 py-0.5 text-xs font-medium text-white/70">
               {job.type}
             </span>
           )}
         </div>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/50">
           {job.salary && (
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
-              {job.salary}
-            </span>
+            <span className="font-medium text-white">{job.salary}</span>
           )}
           {job.salary && job.location && (
-            <span className="text-zinc-300 dark:text-zinc-700">·</span>
+            <span className="text-white/30">·</span>
           )}
           {job.location && <span>{job.location}</span>}
           {posted && (
             <>
-              <span className="text-zinc-300 dark:text-zinc-700">·</span>
+              <span className="text-white/30">·</span>
               <span>{posted}</span>
             </>
           )}
         </div>
 
         {job.description && (
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/60">
             {job.description}
           </p>
         )}
@@ -418,7 +425,8 @@ function RoleRow({ job }: { job: Job }) {
           href={job.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+          style={{ backgroundColor: ACCENT }}
+          className="rounded-md px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
         >
           Apply
         </a>
@@ -442,18 +450,18 @@ function Pagination({
         type="button"
         onClick={() => onChange(current - 1)}
         disabled={current <= 1}
-        className="rounded-md border border-zinc-300 px-3.5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="rounded-md border border-white/20 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Previous
       </button>
-      <span className="text-sm whitespace-nowrap text-zinc-500">
+      <span className="text-sm whitespace-nowrap text-white/50">
         Page {current} of {pages}
       </span>
       <button
         type="button"
         onClick={() => onChange(current + 1)}
         disabled={current >= pages}
-        className="rounded-md border border-zinc-300 px-3.5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="rounded-md border border-white/20 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Next
       </button>
@@ -461,11 +469,26 @@ function Pagination({
   )
 }
 
+// "The Redline" wordmark — white text with the brand accent struck through it,
+// extending slightly past the text on each side.
+function RedlineLogo() {
+  return (
+    <span className="relative inline-block font-semibold whitespace-nowrap text-white">
+      The Redline
+      <span
+        aria-hidden
+        style={{ backgroundColor: ACCENT }}
+        className="absolute top-1/2 right-[-0.12em] left-[-0.12em] h-[2px] -translate-y-1/2"
+      />
+    </span>
+  )
+}
+
 function Caret() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-zinc-400"
+      className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-white/40"
       fill="none"
       stroke="currentColor"
       strokeWidth={2}
