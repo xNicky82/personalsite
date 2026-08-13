@@ -378,18 +378,33 @@ function CompanyCard({
 
 function RoleRow({ job }: { job: Job }) {
   const posted = relativeDate(job.postedAt)
+  // Company-site roles get their own on-domain detail page; other sources
+  // (e.g. the sample fallback) link straight out.
+  const detailHref =
+    job.source === 'Company site'
+      ? `/legaljobs/${encodeURIComponent(job.id)}`
+      : null
   return (
     <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <a
-            href={job.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium underline-offset-4 hover:underline"
-          >
-            {job.title}
-          </a>
+          {detailHref ? (
+            <a
+              href={detailHref}
+              className="font-medium underline-offset-4 hover:underline"
+            >
+              {job.title}
+            </a>
+          ) : (
+            <a
+              href={job.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline-offset-4 hover:underline"
+            >
+              {job.title}
+            </a>
+          )}
           {job.type && (
             <span className="inline-flex shrink-0 items-center rounded-full border border-white/20 px-2 py-0.5 text-xs font-medium text-white/70">
               {job.type}

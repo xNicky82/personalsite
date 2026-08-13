@@ -247,3 +247,141 @@ export async function fetchJobs(): Promise<FetchResult> {
   const jobs = sortNewestFirst(dedupe(collected)).slice(0, MAX_RESULTS)
   return { jobs, source: 'live' }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Single-posting detail — powers the /legaljobs/[slug] pages.                */
+
+export type JobDetail = {
+  id: string
+  title: string
+  company: string
+  domain: string | null
+  location: string | null
+  salary: string | null
+  type: string | null
+  postedAt: string | null
+  url: string // link to the original posting
+  summary: string // short excerpt, NOT the full description
+  source: string
+}
+
+// A short, sentence-aware excerpt of a role's description — a summary, never the
+// full verbatim text.
+function toSummary(html: string, max = 340): string {
+  const text = decodeEntities(html.replace(/<[^>]*>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  const lastStop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '))
+  if (lastStop > max * 0.5) return cut.slice(0, lastStop + 1)
+  return cut.replace(/\s+\S*$/, '') + '…'
+}
+
+const ATS_BY_PREFIX: Record<string, string> = {
+  gh: 'greenhouse',
+  ashby: 'ashby',
+  lever: 'lever',
+}
+
+// Job ids look like "gh-<token>-<id>" / "ashby-<token>-<id>" / "lever-<token>-<id>".
+// Board tokens never contain a hyphen, but ATS ids can (UUIDs), so split off the
+// first two segments and keep the rest as the id.
+function parseJobId(
+  slug: string,
+): { ats: string; token: string; id: string } | null {
+  const parts = slug.split('-')
+  if (parts.length < 3) return null
+  const ats = ATS_BY_PREFIX[parts[0]]
+  const token = parts[1]
+  const id = parts.slice(2).join('-')
+  if (!ats || !token || !id) return null
+  return { ats, token, id }
+}
+
+export async function fetchJobDetail(slug: string): Promise<JobDetail | null> {
+  const parsed = parseJobId(slug)
+  if (!parsed) return null
+  const { ats, token, id } = parsed
+
+  const board = COMPANY_BOARDS.find(
+    (b) => b.token === token && b.ats === ats,
+  )
+  const company = board?.name ?? token
+  const domain = board?.domain ?? null
+
+  if (ats === 'greenhouse') {
+    const j = asRecord(
+      await getJson(`https://boards-api.greenhouse.io/v1/boards/${token}/jobs/${id}`),
+    )
+    const url = str(j.absolute_url)
+    const title = text(j.title)
+    if (!url || !title) return null
+    return {
+      id: slug,
+      title,
+      company,
+      domain,
+      location: loc(asRecord(j.location).name) || null,
+      salary: null,
+      type: null,
+      postedAt: isoFromString(j.updated_at),
+      url,
+      summary: toSummary(str(j.content)),
+      source: COMPANY_SOURCE,
+    }
+  }
+
+  if (ats === 'lever') {
+    const p = asRecord(
+      await getJson(`https://api.lever.co/v0/postings/${token}/${id}?mode=json`),
+    )
+    const url = str(p.hostedUrl) || str(p.applyUrl)
+    const title = text(p.text)
+    if (!url || !title) return null
+    const cats = asRecord(p.categories)
+    return {
+      id: slug,
+      title,
+      company,
+      domain,
+      location: loc(cats.location) || null,
+      salary: null,
+      type: prettyType(str(cats.commitment)),
+      postedAt: isoFromUnix(p.createdAt),
+      url,
+      summary: toSummary(str(p.descriptionPlain) || str(p.description)),
+      source: COMPANY_SOURCE,
+    }
+  }
+
+  if (ats === 'ashby') {
+    // Ashby has no per-posting endpoint — fetch the board and find the posting.
+    const json = await getJson(
+      `https://api.ashbyhq.com/posting-api/job-board/${token}?includeCompensation=true`,
+    )
+    const match = arr(asRecord(json).jobs).find(
+      (x) => str(asRecord(x).id) === id,
+    )
+    const j = asRecord(match)
+    const url = str(j.jobUrl) || str(j.applyUrl)
+    const title = text(j.title)
+    if (!url || !title) return null
+    const comp = str(asRecord(j.compensation).compensationTierSummary)
+    return {
+      id: slug,
+      title,
+      company,
+      domain,
+      location: loc(j.location) || (j.isRemote ? 'Remote' : null),
+      salary: comp || null,
+      type: mapEmploymentType(str(j.employmentType)),
+      postedAt: isoFromString(j.publishedAt) ?? isoFromString(j.publishedDate),
+      url,
+      summary: toSummary(str(j.descriptionHtml) || str(j.descriptionPlain)),
+      source: COMPANY_SOURCE,
+    }
+  }
+
+  return null
+}
