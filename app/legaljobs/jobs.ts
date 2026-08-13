@@ -20,7 +20,6 @@ import {
   htmlToText,
   prettyType,
   titleLooksLegal,
-  toBlurb,
 } from './data'
 
 const TIMEOUT_MS = 9000
@@ -106,12 +105,127 @@ function mapEmploymentType(s: string): string | null {
   return map[s] ?? prettyType(s)
 }
 
+// Phrases that signal a block is describing the ROLE (vs. the company).
+const ROLE_CUES = [
+  "you'll",
+  'you will',
+  'you’ll',
+  'your role',
+  'the role',
+  'in this role',
+  'as a ',
+  'as the ',
+  'we are looking',
+  'we’re looking',
+  "we're looking",
+  'responsib',
+  'what you',
+  'who you are',
+  'your impact',
+  'day-to-day',
+  'day to day',
+  'on this team',
+  'requirements',
+  'qualifications',
+  'what we',
+]
+const COMPANY_LEAD = /^(about\b|who we are|our mission|our story|our team\b|company\b)/i
+
+// Split HTML into block-level chunks of plain text, preserving boundaries so we
+// can tell the "About the company" intro apart from the role content.
+const BLOCK_MARK = '~~BLK~~'
+function splitBlocks(html: string): string[] {
+  // Decode first so entity-encoded markup (Greenhouse's "&lt;/p&gt;") becomes
+  // real tags, then mark block boundaries, strip remaining tags, and split.
+  const marked = decodeEntities(html)
+    .replace(/<\/(p|div|li|h[1-6]|ul|ol|section|header|tr)>/gi, BLOCK_MARK)
+    .replace(/<br\s*\/?>/gi, BLOCK_MARK)
+  const text = decodeEntities(marked.replace(/<[^>]*>/g, ' ')).replace(
+    /\s+/g,
+    ' ',
+  )
+  return text
+    .split(BLOCK_MARK)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+}
+
+// Build a short summary that talks about the JOB — skipping company boilerplate.
+function roleSummary(html: string, company: string, max = 340): string {
+  const blocks = splitBlocks(html)
+  if (blocks.length === 0) return ''
+  const companyLc = company.toLowerCase()
+  const hasRoleCue = (b: string) => {
+    const lc = b.toLowerCase()
+    return ROLE_CUES.some((c) => lc.includes(c))
+  }
+  const isCompanyBlock = (b: string) => {
+    const lc = b.toLowerCase()
+    if (COMPANY_LEAD.test(b)) return true
+    return (
+      lc.includes(companyLc) &&
+      /\b(is|are|was|founded|mission|building|reinventing|leading|provider|platform|company)\b/.test(lc) &&
+      !hasRoleCue(b)
+    )
+  }
+
+  let start = blocks.findIndex(hasRoleCue)
+  if (start === -1) {
+    start = 0
+    while (start < blocks.length - 1 && isCompanyBlock(blocks[start])) start++
+  } else if (blocks[start].length < 30 && start < blocks.length - 1) {
+    start++ // matched a short heading like "The role" — use the next block
+  }
+
+  let out = ''
+  for (let i = start; i < blocks.length; i++) {
+    const b = blocks[i]
+    if (b.length < 30 && /[:]$|^[A-Z][A-Za-z ]{2,24}$/.test(b)) continue // skip headings
+    out = out ? `${out} ${b}` : b
+    if (out.length >= max) break
+  }
+  if (!out) out = blocks[start] ?? blocks[0]
+
+  const text = out.replace(/\s+/g, ' ').trim()
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  const stop = Math.max(
+    cut.lastIndexOf('. '),
+    cut.lastIndexOf('! '),
+    cut.lastIndexOf('? '),
+  )
+  return stop > max * 0.5 ? cut.slice(0, stop + 1) : cut.replace(/\s+\S*$/, '') + '…'
+}
+
+// Pull a plausible annual salary range out of free text, e.g. "$120,000 –
+// $160,000" or "$120K to $160K" → "$120k – $160k". Returns null if none.
+function extractSalary(text: string): string | null {
+  if (!text) return null
+  const re =
+    /\$\s?(\d[\d.,]*)\s?([kK])?\s?(?:–|—|-|to)\s?\$?\s?(\d[\d.,]*)\s?([kK])?/
+  const m = text.match(re)
+  if (!m) return null
+  const toN = (numStr: string, k?: string) => {
+    let n = parseFloat(numStr.replace(/,/g, ''))
+    if (!Number.isFinite(n)) return 0
+    if (k) n *= 1000
+    if (n < 1000) n *= 1000 // bare "120" almost always means 120k in this context
+    return n
+  }
+  const lo = toN(m[1], m[2])
+  const hi = toN(m[3], m[4])
+  // Only accept a plausible annual-salary range.
+  if (lo < 30000 || hi <= lo || hi > 1_000_000) return null
+  return `$${Math.round(lo / 1000)}k – $${Math.round(hi / 1000)}k`
+}
+
 /* --- Company ATS boards, filtered to legal roles. ------------------------- */
 
 // Greenhouse: https://boards-api.greenhouse.io/v1/boards/<token>/jobs
 async function fromGreenhouse(c: CompanyBoard): Promise<Job[]> {
+  // content=true so we can build a role-focused blurb and read pay ranges.
   const json = await getJson(
-    `https://boards-api.greenhouse.io/v1/boards/${c.token}/jobs`,
+    `https://boards-api.greenhouse.io/v1/boards/${c.token}/jobs?content=true`,
   )
   return arr(asRecord(json).jobs)
     .map((r): Job | null => {
@@ -119,12 +233,13 @@ async function fromGreenhouse(c: CompanyBoard): Promise<Job[]> {
       const url = str(j.absolute_url)
       const title = text(j.title)
       if (!url || !title || !titleLooksLegal(title)) return null
+      const content = str(j.content)
       return {
         id: `gh-${c.token}-${str(j.id) || url}`,
         title,
         company: c.name,
-        description: '',
-        salary: null,
+        description: roleSummary(content, c.name, 200),
+        salary: extractSalary(htmlToText(content)),
         location: loc(asRecord(j.location).name) || 'See posting',
         type: null,
         tags: [],
@@ -149,12 +264,13 @@ async function fromAshby(c: CompanyBoard): Promise<Job[]> {
       const title = text(j.title)
       if (!url || !title || !titleLooksLegal(title)) return null
       const comp = str(asRecord(j.compensation).compensationTierSummary)
+      const dHtml = str(j.descriptionHtml) || str(j.descriptionPlain)
       return {
         id: `ashby-${c.token}-${str(j.id) || url}`,
         title,
         company: c.name,
-        description: toBlurb(str(j.descriptionHtml) || str(j.descriptionPlain)),
-        salary: comp || null,
+        description: roleSummary(dHtml, c.name, 200),
+        salary: comp || extractSalary(htmlToText(dHtml)),
         location: loc(j.location) || (j.isRemote ? 'Remote' : 'See posting'),
         type: mapEmploymentType(str(j.employmentType)),
         tags: [text(j.team) || text(j.department)].filter(Boolean),
@@ -179,12 +295,13 @@ async function fromLever(c: CompanyBoard): Promise<Job[]> {
       const title = text(p.text)
       if (!url || !title || !titleLooksLegal(title)) return null
       const cats = asRecord(p.categories)
+      const descHtml = str(p.description) || str(p.descriptionPlain)
       return {
         id: `lever-${c.token}-${str(p.id) || url}`,
         title,
         company: c.name,
-        description: toBlurb(str(p.descriptionPlain) || str(p.description)),
-        salary: null,
+        description: roleSummary(descHtml, c.name, 200),
+        salary: extractSalary(str(p.descriptionPlain) || htmlToText(descHtml)),
         location: loc(cats.location) || 'See posting',
         type: prettyType(str(cats.commitment)),
         tags: [text(cats.team)].filter(Boolean),
@@ -266,17 +383,6 @@ export type JobDetail = {
   source: string
 }
 
-// A short, sentence-aware excerpt of a role's description — a summary, never the
-// full verbatim text.
-function toSummary(html: string, max = 340): string {
-  const text = htmlToText(html)
-  if (text.length <= max) return text
-  const cut = text.slice(0, max)
-  const lastStop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '))
-  if (lastStop > max * 0.5) return cut.slice(0, lastStop + 1)
-  return cut.replace(/\s+\S*$/, '') + '…'
-}
-
 const ATS_BY_PREFIX: Record<string, string> = {
   gh: 'greenhouse',
   ashby: 'ashby',
@@ -316,17 +422,18 @@ export async function fetchJobDetail(slug: string): Promise<JobDetail | null> {
     const url = str(j.absolute_url)
     const title = text(j.title)
     if (!url || !title) return null
+    const content = str(j.content)
     return {
       id: slug,
       title,
       company,
       domain,
       location: loc(asRecord(j.location).name) || null,
-      salary: null,
+      salary: extractSalary(htmlToText(content)),
       type: null,
       postedAt: isoFromString(j.updated_at),
       url,
-      summary: toSummary(str(j.content)),
+      summary: roleSummary(content, company),
       source: COMPANY_SOURCE,
     }
   }
@@ -339,17 +446,18 @@ export async function fetchJobDetail(slug: string): Promise<JobDetail | null> {
     const title = text(p.text)
     if (!url || !title) return null
     const cats = asRecord(p.categories)
+    const descHtml = str(p.description) || str(p.descriptionPlain)
     return {
       id: slug,
       title,
       company,
       domain,
       location: loc(cats.location) || null,
-      salary: null,
+      salary: extractSalary(str(p.descriptionPlain) || htmlToText(descHtml)),
       type: prettyType(str(cats.commitment)),
       postedAt: isoFromUnix(p.createdAt),
       url,
-      summary: toSummary(str(p.descriptionPlain) || str(p.description)),
+      summary: roleSummary(descHtml, company),
       source: COMPANY_SOURCE,
     }
   }
@@ -367,17 +475,18 @@ export async function fetchJobDetail(slug: string): Promise<JobDetail | null> {
     const title = text(j.title)
     if (!url || !title) return null
     const comp = str(asRecord(j.compensation).compensationTierSummary)
+    const dHtml = str(j.descriptionHtml) || str(j.descriptionPlain)
     return {
       id: slug,
       title,
       company,
       domain,
       location: loc(j.location) || (j.isRemote ? 'Remote' : null),
-      salary: comp || null,
+      salary: comp || extractSalary(htmlToText(dHtml)),
       type: mapEmploymentType(str(j.employmentType)),
       postedAt: isoFromString(j.publishedAt) ?? isoFromString(j.publishedDate),
       url,
-      summary: toSummary(str(j.descriptionHtml) || str(j.descriptionPlain)),
+      summary: roleSummary(dHtml, company),
       source: COMPANY_SOURCE,
     }
   }

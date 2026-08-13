@@ -65,6 +65,12 @@ export function LegalJobsApp({
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     setEmbed(p.get('embed') === '1' || p.get('embed') === 'true')
+    // Viewing the list — tell the parent (Webflow) to drop any ?job from its URL.
+    if (window.parent !== window) {
+      try {
+        window.parent.postMessage({ type: 'legaljobs:job', id: null }, '*')
+      } catch {}
+    }
   }, [])
 
   const activeRole = useMemo(
@@ -215,6 +221,7 @@ export function LegalJobsApp({
                     key={g.company}
                     company={g.company}
                     roles={g.roles}
+                    embed={embed}
                   />
                 ))}
               </ul>
@@ -356,9 +363,11 @@ function CompanyLogo({
 function CompanyCard({
   company,
   roles,
+  embed,
 }: {
   company: string
   roles: Job[]
+  embed: boolean
 }) {
   const boards = Array.from(new Set(roles.map((r) => r.source)))
   return (
@@ -376,20 +385,21 @@ function CompanyCard({
 
       <ul className="divide-y divide-white/10">
         {roles.map((job) => (
-          <RoleRow key={job.id} job={job} />
+          <RoleRow key={job.id} job={job} embed={embed} />
         ))}
       </ul>
     </li>
   )
 }
 
-function RoleRow({ job }: { job: Job }) {
+function RoleRow({ job, embed }: { job: Job; embed: boolean }) {
   const posted = relativeDate(job.postedAt)
   // Company-site roles get their own on-domain detail page; other sources
-  // (e.g. the sample fallback) link straight out.
+  // (e.g. the sample fallback) link straight out. Keep the embed flag on
+  // internal links so the embedded experience stays chrome-less.
   const detailHref =
     job.source === 'Company site'
-      ? `/legaljobs/${encodeURIComponent(job.id)}`
+      ? `/legaljobs/${encodeURIComponent(job.id)}${embed ? '?embed=1' : ''}`
       : null
   return (
     <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">

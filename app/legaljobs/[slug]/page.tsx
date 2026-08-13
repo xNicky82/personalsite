@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { fetchJobDetail, type JobDetail } from '../jobs'
+import { ShareBar } from './share-bar'
 
 // Re-fetch a posting's detail at most hourly (matches the board fetch cache).
 export const revalidate = 3600
@@ -22,23 +23,28 @@ export async function generateMetadata({
 
 export default async function JobDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { slug } = await params
+  const sp = await searchParams
+  const embed = sp?.embed === '1' || sp?.embed === 'true'
   const job = await fetchJobDetail(slug)
+  const backHref = embed ? '/legaljobs?embed=1' : '/legaljobs'
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black font-[family-name:var(--font-sohne)] text-white antialiased">
       <div className="mx-auto w-full max-w-3xl px-5 pt-8 pb-24">
         <a
-          href="/legaljobs"
+          href={backHref}
           className="inline-flex items-center gap-1.5 text-sm text-white/60 transition-colors hover:text-white"
         >
           <span aria-hidden>←</span> Browse legal jobs
         </a>
 
-        {job ? <Detail job={job} /> : <NotFound />}
+        {job ? <Detail job={job} /> : <NotFound backHref={backHref} />}
       </div>
     </div>
   )
@@ -117,6 +123,7 @@ function Detail({ job }: { job: JobDetail }) {
         >
           View original posting
         </a>
+        <ShareBar id={job.id} />
       </div>
 
       <p className="mt-12 border-t border-white/10 pt-6 text-xs leading-relaxed text-white/40">
@@ -136,7 +143,7 @@ function Fact({ children }: { children: React.ReactNode }) {
   )
 }
 
-function NotFound() {
+function NotFound({ backHref }: { backHref: string }) {
   return (
     <div className="mt-16 rounded-xl border border-dashed border-white/20 py-16 text-center">
       <p className="text-lg font-semibold">This role may have closed.</p>
@@ -144,7 +151,7 @@ function NotFound() {
         The posting couldn’t be found — it may have been filled or taken down.
       </p>
       <a
-        href="/legaljobs"
+        href={backHref}
         className="mt-4 inline-block text-sm font-medium underline underline-offset-4"
       >
         Back to all legal jobs
