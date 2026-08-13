@@ -103,11 +103,23 @@ export function decodeEntities(input: string): string {
   })
 }
 
+// Convert HTML (possibly entity-encoded, even double-encoded) to plain text.
+// Some boards deliver markup as literal "&lt;div&gt;…" — so we alternate
+// decoding entities and stripping tags until the string stops changing, rather
+// than assuming a single pass is enough.
+export function htmlToText(input: string): string {
+  let s = input
+  for (let i = 0; i < 3; i++) {
+    const next = decodeEntities(s).replace(/<[^>]*>/g, ' ')
+    if (next === s) break
+    s = next
+  }
+  return s.replace(/\s+/g, ' ').trim()
+}
+
 // Collapse HTML/markup to a short single-line plain-text blurb.
 export function toBlurb(html: string, max = 200): string {
-  const text = decodeEntities(html.replace(/<[^>]*>/g, ' '))
-    .replace(/\s+/g, ' ')
-    .trim()
+  const text = htmlToText(html)
   if (text.length <= max) return text
   return text.slice(0, max).replace(/\s+\S*$/, '') + '…'
 }
