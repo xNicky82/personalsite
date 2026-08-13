@@ -50,15 +50,22 @@ const ACCENT = '#FF4716'
 export function LegalJobsApp({
   jobs,
   source,
-  embed = false,
 }: {
   jobs: Job[]
   source: 'live' | 'sample'
-  embed?: boolean
 }) {
   const [roleLabel, setRoleLabel] = useState('') // '' = all legal roles
   const [loc, setLoc] = useState('')
   const [page, setPage] = useState(1)
+
+  // `?embed=1` hides the top nav so the board can be dropped into another site
+  // (e.g. the Webflow iframe). Detected on the client so this page stays static
+  // and edge-cached — reading the query on the server would make it slow.
+  const [embed, setEmbed] = useState(false)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    setEmbed(p.get('embed') === '1' || p.get('embed') === 'true')
+  }, [])
 
   const activeRole = useMemo(
     () => ROLES.find((r) => r.label === roleLabel) ?? null,

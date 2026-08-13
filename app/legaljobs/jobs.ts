@@ -17,6 +17,7 @@ import {
   type Job,
   SAMPLE_JOBS,
   decodeEntities,
+  htmlToText,
   prettyType,
   titleLooksLegal,
   toBlurb,
@@ -268,9 +269,7 @@ export type JobDetail = {
 // A short, sentence-aware excerpt of a role's description — a summary, never the
 // full verbatim text.
 function toSummary(html: string, max = 340): string {
-  const text = decodeEntities(html.replace(/<[^>]*>/g, ' '))
-    .replace(/\s+/g, ' ')
-    .trim()
+  const text = htmlToText(html)
   if (text.length <= max) return text
   const cut = text.slice(0, max)
   const lastStop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '))
