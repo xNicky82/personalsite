@@ -20,6 +20,23 @@
   }
 }
 
+/*
+  Keep the /oura work-email field on-theme when the browser autofills a saved
+  address. Chrome paints its own light background and dark text via
+  :-webkit-autofill, overriding the transparent field. There's no direct way to
+  set the autofill background, so we (a) force the text/caret white and (b) use
+  a very long background-color transition so the autofill background never
+  visibly paints — leaving the field transparent over the dark pill.
+*/
+#work-email:-webkit-autofill,
+#work-email:-webkit-autofill:hover,
+#work-email:-webkit-autofill:focus,
+#work-email:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+  transition: background-color 100000s ease-in-out 0s;
+}
+
 :root {
   --sh-class: #7aa2f7;
   --sh-sign: #89ddff;
