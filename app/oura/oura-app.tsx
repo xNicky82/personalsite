@@ -79,7 +79,9 @@ export function OuraApp() {
                   What&rsquo;s your work email?
                 </label>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
+                {/* Single pill: the input fills the box and the Claim button
+                    is nested inside it on the right, with a small inset. */}
+                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-1.5 focus-within:border-white/30 focus-within:bg-white/10">
                   <input
                     ref={inputRef}
                     id="work-email"
@@ -96,14 +98,14 @@ export function OuraApp() {
                     }}
                     aria-invalid={error ? true : undefined}
                     aria-describedby={error ? errorId : undefined}
-                    className="w-full flex-1 rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-base text-white placeholder:text-white/40 focus:border-white/30 focus:bg-white/10 focus:outline-none"
+                    className="min-w-0 flex-1 bg-transparent px-4 py-2.5 text-base text-white placeholder:text-white/40 focus:outline-none"
                   />
 
                   <button
                     type="submit"
                     disabled={loading}
                     style={{ backgroundColor: ACCENT }}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-7 py-4 text-base font-medium text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-base font-medium text-white transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {loading ? (
                       <>
