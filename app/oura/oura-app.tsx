@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useId, useRef, useState } from 'react'
 import { ARIZONA_STACK } from './fonts'
 
@@ -136,9 +137,23 @@ export function OuraApp() {
               </p>
             </div>
 
-            {/* Right: product panel */}
-            <div className="relative hidden items-center justify-center overflow-hidden bg-black md:flex">
-              <RingCluster />
+            {/* Right: product panel — the real Oura Ring 5 render (a
+                transparent PNG) floating in a softly lit dark field. */}
+            <div
+              className="relative hidden overflow-hidden md:block"
+              style={{
+                background:
+                  'radial-gradient(120% 90% at 62% 42%, #1b1f22 0%, #050607 72%)',
+              }}
+            >
+              <Image
+                src="/oura/rings.webp"
+                alt="Six Oura Ring 5 smart rings arranged in a circle"
+                fill
+                sizes="(min-width: 768px) 50vw, 0px"
+                className="object-contain p-10"
+                priority
+              />
             </div>
           </div>
         </div>
@@ -171,95 +186,6 @@ function Spinner() {
         strokeWidth={3}
         strokeLinecap="round"
       />
-    </svg>
-  )
-}
-
-// A cluster of smart rings echoing the reference art — brushed-metal bands with
-// tiny green sensor LEDs, floating in a dark field. Pure SVG so it stays crisp
-// and weightless at any size, and never triggers a network request.
-function RingCluster() {
-  const rings = [
-    { cx: 200, cy: 120, rx: 62, ry: 78, rot: -18, metal: 'silver' },
-    { cx: 300, cy: 165, rx: 60, ry: 76, rot: 12, metal: 'graphite' },
-    { cx: 322, cy: 268, rx: 61, ry: 77, rot: 30, metal: 'gold' },
-    { cx: 238, cy: 320, rx: 60, ry: 76, rot: -8, metal: 'silver' },
-    { cx: 138, cy: 288, rx: 61, ry: 77, rot: 22, metal: 'graphite' },
-    { cx: 128, cy: 185, rx: 60, ry: 76, rot: -30, metal: 'silver' },
-  ] as const
-
-  return (
-    <svg
-      viewBox="0 0 440 440"
-      className="h-full max-h-[520px] w-full"
-      role="img"
-      aria-label="A cluster of Oura smart rings"
-    >
-      <defs>
-        <radialGradient id="ring-bg" cx="50%" cy="42%" r="70%">
-          <stop offset="0%" stopColor="#1d2124" />
-          <stop offset="100%" stopColor="#050607" />
-        </radialGradient>
-        <linearGradient id="metal-silver" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#e9edf1" />
-          <stop offset="45%" stopColor="#8b939b" />
-          <stop offset="70%" stopColor="#3a4045" />
-          <stop offset="100%" stopColor="#c7cdd3" />
-        </linearGradient>
-        <linearGradient id="metal-graphite" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#6b7178" />
-          <stop offset="45%" stopColor="#2c3033" />
-          <stop offset="72%" stopColor="#0c0e0f" />
-          <stop offset="100%" stopColor="#565c62" />
-        </linearGradient>
-        <linearGradient id="metal-gold" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#f3dfae" />
-          <stop offset="45%" stopColor="#b48a4e" />
-          <stop offset="72%" stopColor="#5c421f" />
-          <stop offset="100%" stopColor="#e6c483" />
-        </linearGradient>
-      </defs>
-
-      <rect x="0" y="0" width="440" height="440" fill="url(#ring-bg)" />
-
-      {rings.map((r, i) => (
-        <g key={i} transform={`rotate(${r.rot} ${r.cx} ${r.cy})`}>
-          {/* band */}
-          <ellipse
-            cx={r.cx}
-            cy={r.cy}
-            rx={r.rx}
-            ry={r.ry}
-            fill="none"
-            stroke={`url(#metal-${r.metal})`}
-            strokeWidth={19}
-          />
-          {/* inner + outer edge definition */}
-          <ellipse
-            cx={r.cx}
-            cy={r.cy}
-            rx={r.rx - 9.5}
-            ry={r.ry - 9.5}
-            fill="none"
-            stroke="#000"
-            strokeOpacity={0.55}
-            strokeWidth={1.5}
-          />
-          <ellipse
-            cx={r.cx}
-            cy={r.cy}
-            rx={r.rx + 9.5}
-            ry={r.ry + 9.5}
-            fill="none"
-            stroke="#000"
-            strokeOpacity={0.35}
-            strokeWidth={1.5}
-          />
-          {/* sensor LEDs on the inner face */}
-          <circle cx={r.cx - 7} cy={r.cy + r.ry - 10} r={2.6} fill="#7Cf6b4" />
-          <circle cx={r.cx + 6} cy={r.cy + r.ry - 10} r={2.6} fill="#65e0ff" />
-        </g>
-      ))}
     </svg>
   )
 }
