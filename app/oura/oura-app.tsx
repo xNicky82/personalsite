@@ -7,29 +7,8 @@ import { ARIZONA_STACK } from './fonts'
 const ACCENT = '#F94E1D'
 
 // The Tally form to open. Its styling and multi-page flow are configured in
-// Tally; we only prefill its hidden `email` field and open it in a modal.
+// Tally; the website only collects the email and hands off to the hosted form.
 const FORM_ID = 'lb8BOV'
-
-// Tally's embed script (loaded in page.tsx) attaches this global. Typed loosely
-// — we only touch openPopup and pass through the documented options.
-type TallyPopupOptions = {
-  layout?: 'default' | 'modal'
-  width?: number
-  overlay?: boolean
-  hiddenFields?: Record<string, string>
-  onOpen?: () => void
-  onClose?: () => void
-  onSubmit?: (payload: unknown) => void
-}
-
-declare global {
-  interface Window {
-    Tally?: {
-      openPopup: (formId: string, options?: TallyPopupOptions) => void
-      closePopup?: (formId: string) => void
-    }
-  }
-}
 
 export function OuraApp() {
   const [email, setEmail] = useState('')
@@ -45,7 +24,7 @@ export function OuraApp() {
     const value = email.trim()
 
     // Native email validation — required + type="email". Show the inline error
-    // and the browser's own tooltip, and don't open the popup for bad input.
+    // and the browser's own tooltip, and don't navigate on bad input.
     if (!input || !value || !input.checkValidity()) {
       setError(
         input?.validationMessage || 'Please enter a valid work email address.',
@@ -57,28 +36,13 @@ export function OuraApp() {
     setError('')
     setLoading(true)
 
-    if (typeof window !== 'undefined' && window.Tally) {
-      window.Tally.openPopup(FORM_ID, {
-        layout: 'modal',
-        width: 700,
-        overlay: true,
-        // Prefill (but keep editable) Tally's hidden `email` field. The value
-        // persists across every page of the form and into the submission.
-        hiddenFields: { email: value },
-        onOpen: () => setLoading(false),
-        onClose: () => setLoading(false),
-        onSubmit: () => {
-          // Hook point for analytics — intentionally left without logging the
-          // email so the address isn't exposed unnecessarily.
-        },
-      })
-    } else {
-      // Fallback if the embed script hasn't loaded: hand off to Tally directly,
-      // still carrying the entered email so nothing is lost.
-      window.location.href = `https://tally.so/r/${FORM_ID}?email=${encodeURIComponent(
-        value,
-      )}`
-    }
+    // Open the Tally form as its own page (not a modal). The email is passed
+    // via the `email` query param, which populates the form's hidden `email`
+    // field — prefilled but editable, and carried through every page of the
+    // form into the final submission.
+    window.location.href = `https://tally.so/r/${FORM_ID}?email=${encodeURIComponent(
+      value,
+    )}`
   }
 
   return (
