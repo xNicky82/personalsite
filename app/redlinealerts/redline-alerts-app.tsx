@@ -24,6 +24,13 @@ const POLL_MS = 45_000
 // How long a freshly-arrived card keeps its highlight.
 const FLASH_MS = 1400
 
+// Sort comparator: newest first. Applied every time the visible list changes so
+// the feed is always strictly most-recent-at-top — a genuinely new item rises
+// to the top, while an older item dripped in from the backlog settles into its
+// correct chronological slot rather than jumping above newer cards.
+const byRecent = (a: Alert, b: Alert) =>
+  Date.parse(b.publishedAt) - Date.parse(a.publishedAt)
+
 export function RedlineAlertsApp({
   initialAlerts,
   source: initialSource,
@@ -32,7 +39,7 @@ export function RedlineAlertsApp({
   source: Source
 }) {
   const [visible, setVisible] = useState<Alert[]>(() =>
-    initialAlerts.slice(0, INITIAL_VISIBLE),
+    [...initialAlerts].sort(byRecent).slice(0, INITIAL_VISIBLE),
   )
   const [source, setSource] = useState<Source>(initialSource)
   const [flash, setFlash] = useState<Set<string>>(new Set())
@@ -44,7 +51,9 @@ export function RedlineAlertsApp({
   // Buffer of not-yet-shown alerts, plus every id we've ever surfaced (for
   // de-duping poll results). Kept in refs so topping them up never forces a
   // re-render on its own.
-  const queueRef = useRef<Alert[]>(initialAlerts.slice(INITIAL_VISIBLE))
+  const queueRef = useRef<Alert[]>(
+    [...initialAlerts].sort(byRecent).slice(INITIAL_VISIBLE),
+  )
   const seenRef = useRef<Set<string>>(
     new Set(initialAlerts.map((a) => a.id)),
   )
@@ -76,7 +85,7 @@ export function RedlineAlertsApp({
       if (q.length > 0) {
         const next = q.shift() as Alert
         setLive(true)
-        setVisible((prev) => [next, ...prev].slice(0, MAX_VISIBLE))
+        setVisible((prev) => [next, ...prev].sort(byRecent).slice(0, MAX_VISIBLE))
         setFlash((prev) => new Set(prev).add(next.id))
         setTimeout(() => {
           setFlash((prev) => {
@@ -140,12 +149,6 @@ export function RedlineAlertsApp({
             </a>
             <div className="flex items-center gap-6 text-sm text-white/60">
               <LiveBadge live={live} />
-              <a
-                href="/"
-                className="rounded-md border border-white/20 px-3 py-1.5 font-medium text-white transition-colors hover:bg-white/10"
-              >
-                Portfolio
-              </a>
             </div>
           </div>
         </nav>
@@ -155,20 +158,13 @@ export function RedlineAlertsApp({
         {/* headline */}
         <header className="mb-8">
           <h1 className="max-w-2xl text-4xl leading-[1.05] font-semibold tracking-tight sm:text-5xl">
-            Legal news, <span style={{ color: ACCENT }}>the moment</span> it
+            Legal news <span style={{ color: ACCENT }}>the moment</span> it
             breaks
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-2 text-sm text-white/60">
             <span>A live feed powered by</span>
             <RedlineLogo />
           </div>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/50">
-            A demo of the Redline Alerts concept — short, Polymarket-style
-            headlines on contracts, litigation, and regulation as they land.
-            Next up: wired to Spellbook’s{' '}
-            <span className="font-medium text-white/80">Redline X</span> across
-            every legal and contract signal.
-          </p>
         </header>
 
         {source === 'sample' && (

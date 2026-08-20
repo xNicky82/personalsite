@@ -34,7 +34,12 @@ const UA =
 // recency; `hl`/`gl`/`ceid` pin it to US English.
 const GN = 'https://news.google.com/rss/search'
 const GN_TAIL = '&hl=en-US&gl=US&ceid=US:en'
-const FEEDS: { url: string; source: string }[] = [
+// `trust: true` marks a feed whose search query is already tightly scoped to a
+// legal / legal-tech topic (hiring, product launches, lateral moves). Those
+// items are kept even when a headline doesn't literally contain a legal
+// keyword — the query has already done the topic filtering — so genuinely
+// broader, non-mainstream signals aren't dropped by `looksLegal`.
+const FEEDS: { url: string; source: string; trust?: boolean }[] = [
   {
     url: `${GN}?q=${encodeURIComponent('(contract OR "breach of contract" OR merger OR acquisition) law when:2d')}${GN_TAIL}`,
     source: 'Google News',
@@ -54,6 +59,24 @@ const FEEDS: { url: string; source: string }[] = [
   {
     url: `${GN}?q=${encodeURIComponent('("legal tech" OR "contract AI" OR "legal AI" OR compliance software) when:7d')}${GN_TAIL}`,
     source: 'Google News',
+  },
+  // Broader, less-mainstream legal signals below — new hires / lateral moves,
+  // product launches & funding, and open legal roles. Each query is already
+  // legal-scoped, so these feeds are trusted past the keyword filter.
+  {
+    url: `${GN}?q=${encodeURIComponent('("law firm" OR "general counsel" OR "chief legal officer") (hires OR names OR appoints OR joins OR "lateral" OR "new partner") when:7d')}${GN_TAIL}`,
+    source: 'Google News',
+    trust: true,
+  },
+  {
+    url: `${GN}?q=${encodeURIComponent('("legal tech" OR "contract AI" OR "legal AI" OR CLM OR "contract management") (launches OR unveils OR "rolls out" OR debuts OR raises OR "new product") when:7d')}${GN_TAIL}`,
+    source: 'Google News',
+    trust: true,
+  },
+  {
+    url: `${GN}?q=${encodeURIComponent('("general counsel" OR "legal counsel" OR paralegal OR "compliance officer" OR "legal operations") (hiring OR "job opening" OR "now hiring" OR "open role") when:7d')}${GN_TAIL}`,
+    source: 'Google News',
+    trust: true,
   },
 ]
 
@@ -141,7 +164,9 @@ export async function fetchAlerts(
     for (const item of parseRss(xml)) {
       const headline = toHeadline(item.title)
       if (headline.length < 12) continue
-      if (!looksLegal(`${item.title} ${headline}`)) continue
+      // Trusted feeds are already topic-scoped by their query; only the broad
+      // news wires get the extra legal-keyword gate.
+      if (!FEEDS[i].trust && !looksLegal(`${item.title} ${headline}`)) continue
       const id = hashId(headline.toLowerCase())
       if (byId.has(id)) continue
       byId.set(id, {

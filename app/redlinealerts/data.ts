@@ -21,6 +21,9 @@ export type AlertCategory =
   | 'Ruling'
   | 'Policy'
   | 'Legal Tech'
+  | 'Hiring' // new job postings / open legal roles
+  | 'People' // lateral moves, new hires, GC/CLO appointments
+  | 'Launch' // product announcements, feature launches, funding
 
 export type Alert = {
   id: string // stable id, unique across sources (hash of the headline)
@@ -52,6 +55,9 @@ export const CATEGORY_STYLE: Record<
   Ruling: { dot: '#eab308', label: 'Ruling' },
   Policy: { dot: '#6366f1', label: 'Policy' },
   'Legal Tech': { dot: '#ec4899', label: 'Legal Tech' },
+  Hiring: { dot: '#22c55e', label: 'Hiring' },
+  People: { dot: '#0ea5e9', label: 'People' },
+  Launch: { dot: '#f59e0b', label: 'Launch' },
 }
 
 export const CATEGORIES = Object.keys(CATEGORY_STYLE) as AlertCategory[]
@@ -118,6 +124,62 @@ const CATEGORY_RULES: { category: AlertCategory; kw: string[] }[] = [
       'deal',
       'to buy',
       'stake in',
+    ],
+  },
+  {
+    category: 'People',
+    kw: [
+      'joins as',
+      'joins ',
+      'hires',
+      'names',
+      'appoints',
+      'appointed',
+      'elevates',
+      'promoted to',
+      'lateral',
+      'new partner',
+      'new general counsel',
+      'chief legal officer',
+      'general counsel',
+      'steps down',
+      'departs',
+      'to lead',
+    ],
+  },
+  {
+    category: 'Hiring',
+    kw: [
+      'is hiring',
+      'now hiring',
+      'job opening',
+      'open role',
+      'open position',
+      'job posting',
+      'hiring for',
+      'seeking a',
+      'careers',
+    ],
+  },
+  {
+    category: 'Launch',
+    kw: [
+      'launches',
+      'unveils',
+      'rolls out',
+      'debuts',
+      'introduces',
+      'new product',
+      'new feature',
+      'now available',
+      'general availability',
+      'raises $',
+      'raises €',
+      'series a',
+      'series b',
+      'series c',
+      'seed round',
+      'funding round',
     ],
   },
   {
@@ -203,6 +265,13 @@ export const LEGAL_TERMS = [
   'patent',
   'copyright',
   'liability',
+  'general counsel',
+  'paralegal',
+  'law firm',
+  'legaltech',
+  'legal tech',
+  'legal ai',
+  'clm',
 ]
 
 export function looksLegal(text: string): boolean {
@@ -297,6 +366,18 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
       'https://www.reuters.com/legal/',
     ],
     [
+      2,
+      'Spellbook launches Redline X clause-risk scoring for enterprise contracts',
+      'Legaltech News',
+      'https://legaltechnews.com/',
+    ],
+    [
+      3,
+      'Kirkland & Ellis names new global head of M&A',
+      'Above the Law',
+      'https://abovethelaw.com/',
+    ],
+    [
       4,
       'Supreme Court agrees to hear landmark data-privacy case next term',
       'SCOTUSblog',
@@ -307,6 +388,12 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
       'SEC charges fintech unicorn over misleading investor disclosures',
       'SEC Newsroom',
       'https://www.sec.gov/news/pressreleases',
+    ],
+    [
+      9,
+      'Stripe is hiring a Commercial Counsel for its payments team',
+      'Stripe Careers',
+      'https://stripe.com/jobs/search',
     ],
     [
       11,
@@ -321,6 +408,12 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
       'https://www.law360.com/',
     ],
     [
+      16,
+      'Harvey raises $100M Series C to expand its legal AI platform',
+      'TechCrunch',
+      'https://techcrunch.com/',
+    ],
+    [
       19,
       'EU finalizes AI Act guidance on high-risk contract-automation systems',
       'Politico',
@@ -331,6 +424,12 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
       'Streaming giant sued for breach of talent-licensing agreements',
       'The Hollywood Reporter',
       'https://www.hollywoodreporter.com/',
+    ],
+    [
+      26,
+      'DoorDash is hiring a senior commercial paralegal for its legal team',
+      'DoorDash Careers',
+      'https://careers.doordash.com/',
     ],
     [
       29,
@@ -347,6 +446,18 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
     [
       41,
       'Spellbook expands Redline X to auto-flag risky indemnity clauses',
+      'Legaltech News',
+      'https://legaltechnews.com/',
+    ],
+    [
+      44,
+      'Latham & Watkins hires antitrust partner away from a rival firm',
+      'Reuters Legal',
+      'https://www.reuters.com/legal/',
+    ],
+    [
+      46,
+      'Ironclad unveils AI redlining for high-volume procurement contracts',
       'Legaltech News',
       'https://legaltechnews.com/',
     ],
@@ -375,6 +486,12 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
       'https://news.bloomberglaw.com/',
     ],
     [
+      78,
+      'Coinbase appoints a new Chief Legal Officer',
+      'Bloomberg Law',
+      'https://news.bloomberglaw.com/',
+    ],
+    [
       84,
       'Federal judge blocks noncompete clause under new FTC rule',
       'Law360',
@@ -397,6 +514,12 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
       'Appeals court narrows scope of software patent in landmark ruling',
       'Law360',
       'https://www.law360.com/',
+    ],
+    [
+      132,
+      'Shopify posts a job opening for Commercial Counsel, North America',
+      'Shopify Careers',
+      'https://www.shopify.com/careers',
     ],
     [
       145,
