@@ -162,13 +162,6 @@ export function RedlineAlertsApp({
             <span>A live feed powered by</span>
             <RedlineLogo />
           </div>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/50">
-            A demo of the Redline Alerts concept — short, Polymarket-style
-            headlines on contracts, litigation, and regulation as they land.
-            Next up: wired to Spellbook’s{' '}
-            <span className="font-medium text-white/80">Redline X</span> across
-            every legal and contract signal.
-          </p>
         </header>
 
         {source === 'sample' && (
