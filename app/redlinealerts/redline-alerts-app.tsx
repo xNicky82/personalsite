@@ -158,8 +158,9 @@ export function RedlineAlertsApp({
         {/* headline */}
         <header className="mb-8">
           <h1 className="max-w-2xl text-4xl leading-[1.05] font-semibold tracking-tight sm:text-5xl">
-            Legal news <span style={{ color: ACCENT }}>the moment</span> it
-            breaks
+            Your source for{' '}
+            <span style={{ color: ACCENT }}>legal news</span> the moment it
+            happens
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-2 text-sm text-white/60">
             <span>A live feed powered by</span>
