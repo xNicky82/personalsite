@@ -22,6 +22,10 @@ import {
   looksLegal,
   toHeadline,
 } from './data'
+// Reuse the exact watchlist of major tech / AI companies that powers
+// /legaljobs, so the two features stay in sync — add a company once and it's
+// monitored here too.
+import { COMPANY_BOARDS } from '../legaljobs/companies'
 
 const TIMEOUT_MS = 9000
 const REVALIDATE_S = 300 // re-fetch each feed at most every 5 minutes
@@ -99,6 +103,37 @@ const FEEDS: { url: string; source: string; trust?: boolean }[] = [
   },
 ]
 
+// --- Company watchlist ------------------------------------------------------
+// Monitor each major tech / AI company from the shared COMPANY_BOARDS list for
+// *legally relevant* news only: contracts, SEC filings, M&A, litigation,
+// antitrust, enforcement, IP. Company names are OR'd into batches (to stay
+// within a sane number of requests) and ANDed with this legal clause so we get
+// "Anthropic + lawsuit", never "Anthropic launches a new model". These feeds
+// are NOT trusted, so `looksLegal` still runs as a second gate — keeping noise
+// from generic company names (e.g. "Ro", "Notion") out of the wire.
+const WATCH_CLAUSE =
+  '(lawsuit OR antitrust OR settlement OR "SEC filing" OR "10-K" OR "8-K" OR IPO OR acquisition OR merger OR acquires OR contract OR "breach of contract" OR regulator OR probe OR fine OR patent OR copyright OR subpoena)'
+const WATCH_BATCH = 10 // companies per query
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = []
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
+  return out
+}
+
+const WATCHLIST_FEEDS: { url: string; source: string; trust?: boolean }[] =
+  chunk(COMPANY_BOARDS, WATCH_BATCH).map((group) => {
+    const names = group.map((c) => `"${c.name}"`).join(' OR ')
+    return {
+      url: `${GN}?q=${encodeURIComponent(`(${names}) ${WATCH_CLAUSE} when:2d`)}${GN_TAIL}`,
+      source: 'Google News',
+    }
+  })
+
+// Every source the aggregator scans: the curated topic feeds plus the
+// per-company watchlist feeds.
+const ALL_FEEDS = [...FEEDS, ...WATCHLIST_FEEDS]
+
 // Pull the first capture group of a regex out of an RSS <item> block.
 function pick(block: string, re: RegExp): string {
   const m = block.match(re)
@@ -175,7 +210,7 @@ function toIso(pubDate: string): string | null {
 export async function fetchAlerts(
   anchorMs: number,
 ): Promise<{ alerts: Alert[]; source: Source }> {
-  const docs = await Promise.all(FEEDS.map((f) => getText(f.url)))
+  const docs = await Promise.all(ALL_FEEDS.map((f) => getText(f.url)))
 
   const byId = new Map<string, Alert>()
   docs.forEach((xml, i) => {
@@ -185,14 +220,15 @@ export async function fetchAlerts(
       if (headline.length < 12) continue
       // Trusted feeds are already topic-scoped by their query; only the broad
       // news wires get the extra legal-keyword gate.
-      if (!FEEDS[i].trust && !looksLegal(`${item.title} ${headline}`)) continue
+      if (!ALL_FEEDS[i].trust && !looksLegal(`${item.title} ${headline}`))
+        continue
       const id = hashId(headline.toLowerCase())
       if (byId.has(id)) continue
       byId.set(id, {
         id,
         headline,
         category: classify(headline),
-        source: item.source || FEEDS[i].source,
+        source: item.source || ALL_FEEDS[i].source,
         url: item.link,
         publishedAt: toIso(item.pubDate) ?? new Date(anchorMs).toISOString(),
       })
