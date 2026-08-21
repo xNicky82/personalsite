@@ -241,6 +241,18 @@ const CATEGORY_RULES: { category: AlertCategory; kw: string[] }[] = [
       'rule',
       'mandate',
       'ban',
+      // corporate filings / disclosures
+      'sec filing',
+      'securities filing',
+      '10-k',
+      '10-q',
+      '8-k',
+      's-1',
+      'prospectus',
+      'files for ipo',
+      'ipo',
+      'discloses',
+      'disclosure',
     ],
   },
 ]
@@ -400,6 +412,18 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
       'https://www.scotusblog.com/',
     ],
     [
+      5,
+      'OpenAI signs multi-year cloud-compute contract worth $10B',
+      'Reuters',
+      'https://www.reuters.com/',
+    ],
+    [
+      6,
+      'Anthropic sued over AI training-data copyright claims',
+      'Bloomberg Law',
+      'https://news.bloomberglaw.com/',
+    ],
+    [
       7,
       'SEC charges fintech unicorn over misleading investor disclosures',
       'SEC Newsroom',
@@ -430,6 +454,12 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
       'https://techcrunch.com/',
     ],
     [
+      17,
+      'Databricks to acquire a data-analytics startup in $1B deal',
+      'Reuters',
+      'https://www.reuters.com/',
+    ],
+    [
       19,
       'EU finalizes AI Act guidance on high-risk contract-automation systems',
       'Politico',
@@ -446,6 +476,12 @@ export function buildSampleAlerts(anchorMs: number): Alert[] {
       'DoorDash is hiring a senior commercial paralegal for its legal team',
       'DoorDash Careers',
       'https://careers.doordash.com/',
+    ],
+    [
+      28,
+      'Tesla discloses new risk factors in its latest SEC filing',
+      'Reuters',
+      'https://www.reuters.com/',
     ],
     [
       29,
