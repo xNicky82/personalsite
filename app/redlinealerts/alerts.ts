@@ -26,6 +26,7 @@ import {
 const TIMEOUT_MS = 9000
 const REVALIDATE_S = 300 // re-fetch each feed at most every 5 minutes
 const MAX_RESULTS = 80
+const MAX_AGE_MS = 24 * 60 * 60 * 1000 // only surface alerts from the last 24h
 const UA =
   'Mozilla/5.0 (compatible; RedlineAlertsBot/1.0; +https://nicholasrocha.com/redlinealerts)'
 
@@ -43,6 +44,24 @@ const FEEDS: { url: string; source: string; trust?: boolean }[] = [
   {
     url: `${GN}?q=${encodeURIComponent('(contract OR "breach of contract" OR merger OR acquisition) law when:2d')}${GN_TAIL}`,
     source: 'Google News',
+  },
+  // Contract-centric wires — the signal that aligns most closely with the
+  // Spellbook business, so it gets several dedicated, trusted queries covering
+  // disputes, deal structures, and specific clause types.
+  {
+    url: `${GN}?q=${encodeURIComponent('"breach of contract" OR "contract dispute" OR "contract lawsuit" OR "contract termination" when:2d')}${GN_TAIL}`,
+    source: 'Google News',
+    trust: true,
+  },
+  {
+    url: `${GN}?q=${encodeURIComponent('"master services agreement" OR "supply agreement" OR "licensing agreement" OR "procurement contract" OR "vendor agreement" when:2d')}${GN_TAIL}`,
+    source: 'Google News',
+    trust: true,
+  },
+  {
+    url: `${GN}?q=${encodeURIComponent('contract (clause OR indemnity OR "force majeure" OR "non-compete" OR exclusivity OR renewal OR renegotiated) when:2d')}${GN_TAIL}`,
+    source: 'Google News',
+    trust: true,
   },
   {
     url: `${GN}?q=${encodeURIComponent('(lawsuit OR "class action" OR antitrust OR litigation) company when:2d')}${GN_TAIL}`,
@@ -180,7 +199,9 @@ export async function fetchAlerts(
     }
   })
 
+  const cutoff = anchorMs - MAX_AGE_MS
   const alerts = Array.from(byId.values())
+    .filter((a) => Date.parse(a.publishedAt) >= cutoff)
     .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
     .slice(0, MAX_RESULTS)
 

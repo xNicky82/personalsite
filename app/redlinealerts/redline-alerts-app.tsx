@@ -23,6 +23,8 @@ const DRIP_MAX = 6500
 const POLL_MS = 45_000
 // How long a freshly-arrived card keeps its highlight.
 const FLASH_MS = 1400
+// Only ever show alerts from the last 24 hours; older cards age off the feed.
+const MAX_AGE_MS = 24 * 60 * 60 * 1000
 
 // Sort comparator: newest first. Applied every time the visible list changes so
 // the feed is always strictly most-recent-at-top — a genuinely new item rises
@@ -136,7 +138,12 @@ export function RedlineAlertsApp({
     }
   }, [])
 
-  const queued = queueRef.current.length
+  // Keep the on-screen feed to the last 24 hours. Only enforced after mount
+  // (once the client clock is live) so server render — where `now` is 0 —
+  // isn't filtered away, avoiding any hydration mismatch.
+  const shown = mounted
+    ? visible.filter((a) => now - Date.parse(a.publishedAt) <= MAX_AGE_MS)
+    : visible
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black font-[family-name:var(--font-sohne)] text-white antialiased">
@@ -163,7 +170,7 @@ export function RedlineAlertsApp({
             happens
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-2 text-sm text-white/60">
-            <span>A live feed powered by</span>
+            <span>Powered by</span>
             <RedlineLogo />
           </div>
         </header>
@@ -180,7 +187,7 @@ export function RedlineAlertsApp({
         <div className="border-t border-white/10 pt-6">
           <ul className="space-y-2.5">
             <AnimatePresence initial={false}>
-              {visible.map((a) => (
+              {shown.map((a) => (
                 <AlertCard
                   key={a.id}
                   alert={a}
@@ -191,28 +198,6 @@ export function RedlineAlertsApp({
               ))}
             </AnimatePresence>
           </ul>
-
-          {/* listening indicator at the tail of the feed */}
-          <div className="mt-6 flex items-center gap-2.5 text-xs text-white/40">
-            <span className="relative flex h-2 w-2">
-              {live && (
-                <span
-                  className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
-                  style={{ backgroundColor: ACCENT }}
-                />
-              )}
-              <span
-                className="relative inline-flex h-2 w-2 rounded-full"
-                style={{ backgroundColor: live ? ACCENT : '#3f3f46' }}
-              />
-            </span>
-            <span>
-              {live
-                ? 'Live — scanning the wire for new alerts'
-                : 'Caught up — watching for the next alert'}
-              {queued > 0 ? ` · ${queued} queued` : ''}
-            </span>
-          </div>
         </div>
 
         <footer className="mt-16 border-t border-white/10 pt-6 text-xs leading-relaxed text-white/40">
