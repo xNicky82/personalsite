@@ -1,0 +1,832 @@
+<title>Oura Promo Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..700&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* ── tokens ──────────────────────────────────────────────────────────────
+   Warm graphite neutrals biased toward the Spellbook flame, which appears
+   only on chrome. Segment identity uses a validated four-hue categorical
+   set; demo state uses a separate held/pending/lost trio. */
+:root {
+  color-scheme: light;
+  --page: #f4f1ee; --surface: #ffffff; --surface-2: #faf8f6;
+  --rule: #e3ddd6; --rule-strong: #cec6bd;
+  --ink: #17140f; --ink-2: #4d4740; --ink-3: #7d766d;
+  --accent: #f94e1d; --accent-soft: #fdece6;
+  --seg-1: #2a78d6; --seg-2: #eb6834; --seg-3: #4a3aa7; --seg-4: #eda100;
+  --held: #1baf7a; --held-soft: #e2f5ee;
+  --pending: #a9a29a; --pending-soft: #efece8;
+  --lost: #e34948; --lost-soft: #fbe8e7;
+  --spend: #4d4740;
+  --good: #157f5c; --bad: #c0392f;
+  --shadow: 0 1px 2px rgba(23,20,15,.05), 0 8px 24px -16px rgba(23,20,15,.24);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #100e0c; --surface: #191614; --surface-2: #201c19;
+    --rule: #2e2925; --rule-strong: #453e38;
+    --ink: #f4f0ec; --ink-2: #b6ada4; --ink-3: #8b8279;
+    --accent: #ff6a3d; --accent-soft: #2e1a12;
+    --seg-1: #3987e5; --seg-2: #d95926; --seg-3: #9085e9; --seg-4: #c98500;
+    --held: #199e70; --held-soft: #10261f;
+    --pending: #7d756c; --pending-soft: #241f1b;
+    --lost: #e66767; --lost-soft: #2b1616;
+    --spend: #b6ada4;
+    --good: #3fbf8f; --bad: #f07a72;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #100e0c; --surface: #191614; --surface-2: #201c19;
+  --rule: #2e2925; --rule-strong: #453e38;
+  --ink: #f4f0ec; --ink-2: #b6ada4; --ink-3: #8b8279;
+  --accent: #ff6a3d; --accent-soft: #2e1a12;
+  --seg-1: #3987e5; --seg-2: #d95926; --seg-3: #9085e9; --seg-4: #c98500;
+  --held: #199e70; --held-soft: #10261f;
+  --pending: #7d756c; --pending-soft: #241f1b;
+  --lost: #e66767; --lost-soft: #2b1616;
+  --spend: #b6ada4;
+  --good: #3fbf8f; --bad: #f07a72;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font-family: 'Public Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1320px; margin: 0 auto; padding: 28px 22px 72px; display: flex; flex-direction: column; gap: 22px; }
+
+.masthead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; }
+.eyebrow { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+h1 { font-family: 'Archivo', ui-sans-serif, system-ui, sans-serif; font-variation-settings: 'wdth' 118, 'wght' 640; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.06; letter-spacing: -.015em; margin: 0; text-wrap: balance; }
+.sub { margin: 8px 0 0; color: var(--ink-2); max-width: 64ch; }
+
+.rail { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: .04em; color: var(--ink-2); background: var(--surface); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 11px 5px 9px; white-space: nowrap; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); flex: none; }
+.dot.live { background: var(--held); box-shadow: 0 0 0 3px var(--held-soft); }
+.dot.warn { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.dot.down { background: var(--lost); box-shadow: 0 0 0 3px var(--lost-soft); }
+@media (prefers-reduced-motion: no-preference) {
+  .dot.live { animation: pulse 2.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+}
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+.tile { background: var(--surface); padding: 14px 15px 15px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tile-k { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
+.tile-v { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-weight: 600; font-size: clamp(21px, 2.4vw, 27px); letter-spacing: -.02em; color: var(--ink); }
+.tile-n { font-size: 11.5px; color: var(--ink-3); }
+.tile-n b { font-weight: 600; color: var(--ink-2); }
+
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow); }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; padding: 15px 17px 12px; border-bottom: 1px solid var(--rule); }
+.panel-title { font-family: 'Archivo', sans-serif; font-variation-settings: 'wdth' 112, 'wght' 620; font-size: 15px; letter-spacing: -.005em; margin: 0; }
+.panel-note { font-size: 12px; color: var(--ink-3); margin: 3px 0 0; max-width: 70ch; }
+.panel-body { padding: 15px 17px 18px; }
+
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 1240px; }
+th, td { text-align: right; padding: 10px 9px; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; padding-left: 17px; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+th:last-child, td:last-child { padding-right: 17px; }
+thead th { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); vertical-align: bottom; line-height: 1.35; border-bottom: 1px solid var(--rule-strong); padding-bottom: 9px; }
+tbody td { border-bottom: 1px solid var(--rule); font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 13px; }
+tbody td.seg { font-family: 'Public Sans', sans-serif; font-weight: 600; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+tbody tr.total td { background: var(--surface-2); border-bottom: none; font-weight: 600; }
+tbody tr.total td:first-child { background: var(--surface-2); }
+.seg-key { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+td.metric { font-weight: 600; }
+td.money { font-weight: 600; }
+td.bench { color: var(--ink-3); }
+.delta { font-size: 10.5px; display: block; margin-top: 1px; font-weight: 500; }
+.delta.up { color: var(--good); }
+.delta.down { color: var(--bad); }
+.colgroup { border-left: 1px solid var(--rule); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 13px; margin: 0 0 13px; padding: 0; list-style: none; }
+.legend li { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+.swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+
+.mix { display: flex; flex-direction: column; gap: 12px; }
+.mix-row { display: grid; grid-template-columns: 132px 1fr; align-items: center; gap: 12px; }
+.mix-label { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.mix-bar { display: flex; height: 26px; border-radius: 5px; overflow: hidden; gap: 2px; background: var(--rule); }
+.mix-seg { display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; min-width: 0; overflow: hidden; }
+.mix-seg.held { background: var(--held); color: #fff; }
+.mix-seg.pending { background: var(--pending); color: #fff; }
+.mix-seg.lost { background: var(--lost); color: #fff; }
+
+.charts { display: flex; flex-direction: column; gap: 22px; }
+.chart-cap { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 8px; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+.grid-line { stroke: var(--rule); stroke-width: 1; }
+.axis-text { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: var(--ink-3); }
+.bar-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; fill: var(--ink-2); }
+.stack-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; font-weight: 600; fill: #fff; }
+
+.pulse { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 9px; overflow: hidden; }
+.pulse-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); padding: 10px 13px; }
+.pulse-k { font-size: 12.5px; color: var(--ink-2); }
+.pulse-v { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 15px; }
+
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+label.ctl { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; }
+input[type="number"] { width: 74px; font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; font-size: 12.5px; color: var(--ink); background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 4px 7px; }
+button.ghost { font-family: 'Public Sans', sans-serif; font-size: 12px; font-weight: 500; color: var(--ink-2); background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button.ghost:hover { color: var(--ink); border-color: var(--ink-3); }
+button.ghost[disabled] { opacity: .55; cursor: default; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.state { padding: 15px 17px; font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 5px; }
+.state strong { font-weight: 600; color: var(--ink); }
+.state.err { background: var(--lost-soft); border-radius: 9px; }
+.state code { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ink-3); }
+.skeleton { color: var(--ink-3); font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.snapnote { font-size: 11.5px; color: var(--accent); font-family: 'IBM Plex Mono', monospace; padding: 9px 17px 0; }
+
+details.method { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
+details.method > summary { cursor: pointer; padding: 14px 17px; font-family: 'Archivo', sans-serif; font-variation-settings: 'wdth' 112, 'wght' 600; font-size: 14px; list-style: none; display: flex; align-items: center; gap: 9px; }
+details.method > summary::-webkit-details-marker { display: none; }
+details.method > summary::before { content: '+'; font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-size: 15px; }
+details.method[open] > summary::before { content: '\2212'; }
+.method-body { padding: 0 17px 18px; display: grid; gap: 16px 24px; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); }
+.def { font-size: 12.5px; color: var(--ink-2); }
+.def h4 { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 5px; font-weight: 500; }
+.def p { margin: 0 0 8px; }
+.def b { color: var(--ink); font-weight: 600; }
+
+.two { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; align-items: start; }
+@media (max-width: 940px) { .two { grid-template-columns: 1fr; } .mix-row { grid-template-columns: 96px 1fr; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Live campaign desk &middot; Oura Ring giveaway</p>
+      <h1>Oura Promo Desk</h1>
+      <p class="sub">Every demo booked off the Oura Ring giveaway, what the ads and the rings cost to get it, and whether it converts better than the demos this team books the normal way.</p>
+    </div>
+    <div class="rail">
+      <span class="chip"><span class="dot" id="d-hs"></span><span id="s-hs">HubSpot</span></span>
+      <span class="chip"><span class="dot" id="d-sf"></span><span id="s-sf">Snowflake</span></span>
+      <span class="chip"><span class="dot" id="d-clock"></span><span id="s-clock">&mdash;</span></span>
+    </div>
+  </header>
+
+  <section class="tiles" id="tiles" aria-label="Campaign readout"></section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2 class="panel-title">Funnel by segment</h2>
+        <p class="panel-note">Oura demos against this team's own mature benchmark: every New Business and Spellbook lead from Jan 2025 through May 2026, spam excluded.</p>
+      </div>
+      <div class="controls">
+        <label class="ctl">Ring price <input type="number" id="ringCost" min="0" step="25" value="349" aria-label="Oura Ring price in dollars"></label>
+        <button class="ghost" id="refresh" type="button">Refresh now</button>
+      </div>
+    </div>
+    <div class="tablewrap" id="tablewrap"></div>
+    <div id="tablenote"></div>
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Spend and demand, by day</h2>
+          <p class="panel-note">Facebook reports spend once a day, so this pair settles daily while everything above moves by the minute.</p>
+        </div>
+      </div>
+      <div class="panel-body charts" id="charts"></div>
+    </section>
+
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">Where the demos stand</h2>
+            <p class="panel-note">Held, still on the calendar, or gone.</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <ul class="legend">
+            <li><span class="swatch" style="background:var(--held)"></span>Held</li>
+            <li><span class="swatch" style="background:var(--pending)"></span>Outstanding</li>
+            <li><span class="swatch" style="background:var(--lost)"></span>Dropped</li>
+          </ul>
+          <div class="mix" id="mix"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">HubSpot, right now</h2>
+            <p class="panel-note">The promo list, straight from the CRM, ahead of the warehouse.</p>
+          </div>
+        </div>
+        <div class="panel-body" id="pulse"></div>
+      </section>
+    </div>
+  </div>
+
+  <details class="method">
+    <summary>How every number on this page is built</summary>
+    <div class="method-body">
+      <div class="def">
+        <h4>The pipeline</h4>
+        <p>On load, HubSpot returns the live membership and stage of the <b>Oura Ring Promo &mdash; Demos/Deals</b> list. Those deal IDs go straight into two Snowflake queries that build the table and the daily cohort series, and every ratio and dollar figure is worked out in the page from those results plus the ring price above.</p>
+      </div>
+      <div class="def">
+        <h4>Segment</h4>
+        <p>The deal owner's HubSpot team, strictly: Commercial In-House 1/2, Enterprise 1/2/3/EMEA, SMB Law. Anything else is <b>Other/Unassigned</b>.</p>
+      </div>
+      <div class="def">
+        <h4>Booked &middot; Outstanding &middot; Dropped &middot; Held</h4>
+        <p><b>Booked</b> is a deal with at least one meeting dated after 27 Aug, any outcome. <b>Held</b> has a meeting marked completed. <b>Outstanding</b> has nothing held, a future meeting still on the books and no closed-lost. <b>Dropped</b> has nothing held and nothing pending, or the deal is closed lost. The three add back to Booked exactly.</p>
+      </div>
+      <div class="def">
+        <h4>SALs, Trials, Trials Secured</h4>
+        <p><b>SALs</b> are deals with a SAL date. <b>Trials</b> are deals that entered Trialing in the warehouse or sit in Trialing in live HubSpot, which bridges the sync lag and only ever ratchets up. <b>Trials Secured</b> are in Trial Secured but not yet Trialing, and feed no ratio.</p>
+      </div>
+      <div class="def">
+        <h4>Cost</h4>
+        <p>Ad spend is Facebook spend since 28 Aug on Oura creatives only. Each segment carries its share of booked meetings' worth of that spend, plus the ring price for every meeting held. <b>$/SAL</b> and <b>$/Trial</b> divide that by SALs or Trials.</p>
+      </div>
+      <div class="def">
+        <h4>Team benchmarks</h4>
+        <p>Mature cohorts only, Jan 2025 to May 2026. Conversion of booked is SALs over leads; conversion of held is measured among leads that actually held a meeting. Paid $/SAL and $/Trial use attributed paid-media cost shares over paid-attributed outcomes, so it is paid media, not blended CAC.</p>
+      </div>
+      <div class="def">
+        <h4>Spam</h4>
+        <p>Campaign columns drop deals flagged spam or closed lost for <b>Spam/Litigator</b>, which matters on a giveaway.</p>
+      </div>
+      <div class="def">
+        <h4>Freshness</h4>
+        <p>HubSpot and Snowflake are both re-queried every 60 seconds. The warehouse itself pulls from HubSpot and the ad platforms about hourly, so the live pulse panel leads and the table settles behind it. The snapshot this page ships with is republished hourly.</p>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var SF = 'Snowflake', HS = 'HubSpot';
+  var LIST_ID = '15738';
+  var STAGE = { '196326666': 'Opportunity Identified', '35148648': 'Opportunity Identified', '196326667': 'Evaluation', '936925777': 'Trial Secured', '196326668': 'Trialing', '196326672': 'Closed lost', '196326671': 'Closed won' };
+  var TRIALING_STAGE = '196326668', SECURED_STAGE = '936925777';
+  var SEG_ORDER = ['SMB Law', 'Comm In-House', 'Enterprise', 'Other/Unassigned'];
+  var SEG_VAR = { 'SMB Law': '--seg-1', 'Comm In-House': '--seg-2', 'Enterprise': '--seg-3', 'Other/Unassigned': '--seg-4' };
+
+  // Fallback snapshot — republished hourly. Rendered instantly so the page is
+  // never blank, then replaced the moment live results land.
+  var SNAPSHOT = {
+    at: '2026-09-02T20:32:00Z',
+    camp: [
+      { bucket: 'SMB Law', booked: 36, outstanding: 12, dropped: 6, held: 18, sal_of_booked: 13, sal_of_held: 13, trials: 7, trials_of_held: 7, trials_secured: 5 },
+      { bucket: 'Comm In-House', booked: 85, outstanding: 38, dropped: 21, held: 26, sal_of_booked: 18, sal_of_held: 17, trials: 6, trials_of_held: 6, trials_secured: 4 },
+      { bucket: 'Enterprise', booked: 52, outstanding: 29, dropped: 13, held: 10, sal_of_booked: 6, sal_of_held: 3, trials: 0, trials_of_held: 0, trials_secured: 0 },
+      { bucket: 'Other/Unassigned', booked: 16, outstanding: 3, dropped: 9, held: 4, sal_of_booked: 2, sal_of_held: 2, trials: 0, trials_of_held: 0, trials_secured: 0 }
+    ],
+    bench: {
+      'SMB Law': { sal_booked: 66.7, sal_held: 70.7, cost_sal: 1912, trial_held: 55.0, cost_trial: 2390 },
+      'Comm In-House': { sal_booked: 65.3, sal_held: 70.7, cost_sal: 2104, trial_held: 47.1, cost_trial: 3197 },
+      'Enterprise': { sal_booked: 57.2, sal_held: 66.3, cost_sal: 2456, trial_held: 28.0, cost_trial: 5586 }
+    },
+    adCost: 8002.03,
+    daily: [
+      { bucket: 'Comm In-House', d: '2026-08-28', booked: 2, held: 0, sals: 0, trials: 0, ad: 251 },
+      { bucket: 'Other/Unassigned', d: '2026-08-28', booked: 1, held: 0, sals: 0, trials: 0, ad: 125 },
+      { bucket: 'SMB Law', d: '2026-08-28', booked: 3, held: 1, sals: 0, trials: 0, ad: 376 },
+      { bucket: 'Comm In-House', d: '2026-08-29', booked: 16, held: 7, sals: 5, trials: 2, ad: 317 },
+      { bucket: 'Enterprise', d: '2026-08-29', booked: 11, held: 3, sals: 3, trials: 0, ad: 218 },
+      { bucket: 'Other/Unassigned', d: '2026-08-29', booked: 5, held: 2, sals: 2, trials: 0, ad: 99 },
+      { bucket: 'SMB Law', d: '2026-08-29', booked: 10, held: 5, sals: 5, trials: 2, ad: 198 },
+      { bucket: 'Comm In-House', d: '2026-08-30', booked: 35, held: 11, sals: 9, trials: 3, ad: 963 },
+      { bucket: 'Enterprise', d: '2026-08-30', booked: 20, held: 5, sals: 3, trials: 0, ad: 550 },
+      { bucket: 'Other/Unassigned', d: '2026-08-30', booked: 6, held: 1, sals: 0, trials: 0, ad: 165 },
+      { bucket: 'SMB Law', d: '2026-08-30', booked: 17, held: 11, sals: 8, trials: 5, ad: 468 },
+      { bucket: 'Comm In-House', d: '2026-08-31', booked: 4, held: 2, sals: 2, trials: 1, ad: 0 },
+      { bucket: 'Enterprise', d: '2026-08-31', booked: 2, held: 1, sals: 0, trials: 0, ad: 0 },
+      { bucket: 'Other/Unassigned', d: '2026-08-31', booked: 1, held: 1, sals: 0, trials: 0, ad: 0 },
+      { bucket: 'SMB Law', d: '2026-08-31', booked: 1, held: 1, sals: 0, trials: 0, ad: 0 },
+      { bucket: 'Enterprise', d: '2026-09-01', booked: 1, held: 0, sals: 0, trials: 0, ad: 558 },
+      { bucket: 'Comm In-House', d: '2026-09-02', booked: 28, held: 6, sals: 2, trials: 0, ad: 1925 },
+      { bucket: 'Enterprise', d: '2026-09-02', booked: 18, held: 1, sals: 0, trials: 0, ad: 1237 },
+      { bucket: 'Other/Unassigned', d: '2026-09-02', booked: 3, held: 0, sals: 0, trials: 0, ad: 206 },
+      { bucket: 'SMB Law', d: '2026-09-02', booked: 5, held: 0, sals: 0, trials: 0, ad: 344 }
+    ],
+    stages: { 'Opportunity Identified': 121, 'Evaluation': 20, 'Trial Secured': 9, 'Trialing': 13, 'Closed lost': 43 }
+  };
+
+  // ── SQL builders ──────────────────────────────────────────────────────
+  var Q_HUBSPOT = "SELECT hs_object_id, dealstage FROM DEAL WHERE hs_crm_search.ilsListIds = '" + LIST_ID + "' LIMIT 500";
+
+  var BUCKET_CASE =
+    "CASE WHEN HUBSPOT_TEAM_NAME ILIKE 'Commercial In-House%' THEN 'Comm In-House' " +
+    "WHEN HUBSPOT_TEAM_NAME ILIKE 'Enterprise%' THEN 'Enterprise' " +
+    "WHEN HUBSPOT_TEAM_NAME = 'SMB Law' THEN 'SMB Law' ELSE 'Other/Unassigned' END AS bucket";
+
+  var TAG = function (intent) {
+    return '/* {"original_question": "Live Oura Ring campaign tracker with SALs, $/SAL, and team benchmarks", "query_intent": "' + intent + '"} */';
+  };
+
+  function summarySql(ids, trialing, secured) {
+    var IN_TRIAL = trialing.length ? "o.DEAL_ID IN (" + trialing.join(',') + ")" : "FALSE";
+    var IN_SEC = secured.length ? "o.DEAL_ID IN (" + secured.join(',') + ")" : "FALSE";
+    var IS_TRIAL = "(o.TRIALING_DATE IS NOT NULL OR " + IN_TRIAL + ")";
+    return "WITH oura AS (SELECT DEAL_ID, SAL_DATE, TRIALING_DATE, TRIAL_SECURED_ENTRY_DATE, IS_CLOSED_LOST, ALL_CONTACT_IDS, " + BUCKET_CASE +
+      " FROM ANALYTICS.GO_TO_MARKET.HUBSPOT_DEAL WHERE DEAL_ID IN (" + ids.join(',') + ")" +
+      " AND COALESCE(IS_SPAM, FALSE) = FALSE AND COALESCE(CLOSED_LOST_SUB_REASON,'') <> 'Spam/Litigator'), " +
+      "dc AS (SELECT o.DEAL_ID, f.VALUE::number AS contact_id FROM oura o, LATERAL FLATTEN(input => o.ALL_CONTACT_IDS) f), " +
+      "mtg AS (SELECT dc.DEAL_ID, MAX(1) AS booked, MAX(IFF(m.MEETING_OUTCOME='COMPLETED',1,0)) held, " +
+      "MAX(IFF(COALESCE(m.MEETING_OUTCOME,'SCHEDULED') IN ('SCHEDULED','RESCHEDULED') AND m.MEETING_START_TIME > CURRENT_TIMESTAMP,1,0)) pending " +
+      "FROM dc JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_CONTACT ec ON ec.CONTACT_ID=dc.contact_id AND ec.ENGAGEMENT_TYPE='MEETING' " +
+      "JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_MEETING m ON m.ENGAGEMENT_ID=ec.ENGAGEMENT_ID " +
+      "WHERE m.MEETING_START_TIME >= '2026-08-27 00:00:00 -0700' GROUP BY 1), " +
+      "camp AS (SELECT o.bucket, SUM(COALESCE(mtg.booked,0)) booked, " +
+      "COUNT_IF(mtg.booked=1 AND COALESCE(mtg.held,0)=0 AND (COALESCE(mtg.pending,0)=0 OR o.IS_CLOSED_LOST)) dropped, " +
+      "COUNT_IF(mtg.booked=1 AND COALESCE(mtg.held,0)=0 AND COALESCE(mtg.pending,0)=1 AND NOT o.IS_CLOSED_LOST) outstanding, " +
+      "SUM(COALESCE(mtg.held,0)) held, COUNT_IF(mtg.booked=1 AND o.SAL_DATE IS NOT NULL) sal_of_booked, " +
+      "COUNT_IF(mtg.held=1 AND o.SAL_DATE IS NOT NULL) sal_of_held, COUNT_IF(" + IS_TRIAL + ") trials, " +
+      "COUNT_IF(mtg.held=1 AND " + IS_TRIAL + ") trials_of_held, " +
+      "COUNT_IF((o.TRIAL_SECURED_ENTRY_DATE IS NOT NULL OR " + IN_SEC + ") AND NOT " + IS_TRIAL + ") trials_secured " +
+      "FROM oura o LEFT JOIN mtg ON mtg.DEAL_ID=o.DEAL_ID GROUP BY 1), " +
+      "bleads AS (SELECT DEAL_ID, SAL_DATE, TRIALING_DATE, ALL_CONTACT_IDS, ATTRIBUTION_CHANNEL, ATTRIBUTION_DATE, ATTRIBUTION_CAMPAIGN_ID, ATTRIBUTION_ADSET_ID, ATTRIBUTION_AD_ID, " +
+      "CASE WHEN HUBSPOT_TEAM_NAME ILIKE 'Commercial In-House%' THEN 'Comm In-House' WHEN HUBSPOT_TEAM_NAME ILIKE 'Enterprise%' THEN 'Enterprise' WHEN HUBSPOT_TEAM_NAME = 'SMB Law' THEN 'SMB Law' END AS bucket " +
+      "FROM ANALYTICS.GO_TO_MARKET.HUBSPOT_DEAL WHERE CREATE_DATE >= '2025-01-01' AND CREATE_DATE < '2026-06-01' AND PIPELINE_NAME IN ('New Business','Spellbook') " +
+      "AND COALESCE(IS_SPAM, FALSE) = FALSE AND COALESCE(CLOSED_LOST_SUB_REASON,'') <> 'Spam/Litigator' " +
+      "AND (HUBSPOT_TEAM_NAME ILIKE 'Commercial In-House%' OR HUBSPOT_TEAM_NAME ILIKE 'Enterprise%' OR HUBSPOT_TEAM_NAME = 'SMB Law')), " +
+      "bheld AS (SELECT DISTINCT l.DEAL_ID FROM bleads l, LATERAL FLATTEN(input => l.ALL_CONTACT_IDS) f " +
+      "JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_CONTACT ec ON ec.CONTACT_ID=f.VALUE::number AND ec.ENGAGEMENT_TYPE='MEETING' " +
+      "JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_MEETING m ON m.ENGAGEMENT_ID=ec.ENGAGEMENT_ID WHERE m.MEETING_OUTCOME='COMPLETED'), " +
+      "benchpct AS (SELECT l.bucket, ROUND(100.0*COUNT_IF(l.SAL_DATE IS NOT NULL)/COUNT(*),1) pct_sal_of_booked, " +
+      "ROUND(100.0*COUNT_IF(h.DEAL_ID IS NOT NULL AND l.SAL_DATE IS NOT NULL)/NULLIF(COUNT_IF(h.DEAL_ID IS NOT NULL),0),1) pct_sal_of_held, " +
+      "ROUND(100.0*COUNT_IF(h.DEAL_ID IS NOT NULL AND l.TRIALING_DATE IS NOT NULL)/NULLIF(COUNT_IF(h.DEAL_ID IS NOT NULL),0),1) pct_trial_of_held " +
+      "FROM bleads l LEFT JOIN bheld h ON h.DEAL_ID=l.DEAL_ID GROUP BY 1), " +
+      "benchcost AS (SELECT l.bucket, ROUND(SUM(c.TOTAL_COST/NULLIF(c.TOTAL_DEALS,0))/NULLIF(COUNT_IF(l.SAL_DATE IS NOT NULL),0),0) paid_cost_per_sal, " +
+      "ROUND(SUM(c.TOTAL_COST/NULLIF(c.TOTAL_DEALS,0))/NULLIF(COUNT_IF(l.TRIALING_DATE IS NOT NULL),0),0) paid_cost_per_trial " +
+      "FROM bleads l JOIN ANALYTICS.GO_TO_MARKET.CAC_PERFORMANCE_BY_ATTRIBUTION_PERIOD c ON c.PERIOD='month' AND c.CHANNEL = l.ATTRIBUTION_CHANNEL " +
+      "AND c.PERIOD_DATE = DATE_TRUNC('month', l.ATTRIBUTION_DATE) AND c.CAMPAIGN_ID = l.ATTRIBUTION_CAMPAIGN_ID AND c.ADSET_ID = l.ATTRIBUTION_ADSET_ID AND c.AD_ID = l.ATTRIBUTION_AD_ID " +
+      "WHERE c.TOTAL_COST > 0 GROUP BY 1), " +
+      "bench AS (SELECT p.bucket, p.pct_sal_of_booked, p.pct_sal_of_held, bc.paid_cost_per_sal, p.pct_trial_of_held, bc.paid_cost_per_trial " +
+      "FROM benchpct p LEFT JOIN benchcost bc ON bc.bucket=p.bucket), " +
+      "adcost AS (SELECT COALESCE(SUM(TOTAL_COST),0) c FROM ANALYTICS.GO_TO_MARKET.CAC_PERFORMANCE_BY_ATTRIBUTION_PERIOD " +
+      "WHERE PERIOD='date' AND PERIOD_DATE >= '2026-08-28' AND CHANNEL='facebook' AND AD_NAME ILIKE 'oura%') " +
+      "SELECT camp.bucket, camp.booked, camp.dropped, camp.held, camp.sal_of_booked, camp.sal_of_held, bench.pct_sal_of_held, bench.paid_cost_per_sal, " +
+      "camp.trials, camp.trials_of_held, bench.pct_trial_of_held, bench.paid_cost_per_trial, bench.pct_sal_of_booked, camp.outstanding, camp.trials_secured, adcost.c " +
+      "FROM camp LEFT JOIN bench ON bench.bucket=camp.bucket CROSS JOIN adcost " + TAG('Refresh from the Oura Ring Campaign Tracker artifact');
+  }
+
+  function dailySql(ids, trialing) {
+    var IN_TRIAL = trialing.length ? "o.DEAL_ID IN (" + trialing.join(',') + ")" : "FALSE";
+    return "WITH oura AS (SELECT DEAL_ID, CREATE_DATE, SAL_DATE, TRIALING_DATE, ALL_CONTACT_IDS, " + BUCKET_CASE +
+      " FROM ANALYTICS.GO_TO_MARKET.HUBSPOT_DEAL WHERE DEAL_ID IN (" + ids.join(',') + ")" +
+      " AND COALESCE(IS_SPAM, FALSE) = FALSE AND COALESCE(CLOSED_LOST_SUB_REASON,'') <> 'Spam/Litigator'), " +
+      "dc AS (SELECT o.DEAL_ID, f.VALUE::number AS contact_id FROM oura o, LATERAL FLATTEN(input => o.ALL_CONTACT_IDS) f), " +
+      "mtg AS (SELECT dc.DEAL_ID, MAX(IFF(m.MEETING_OUTCOME='COMPLETED',1,0)) held FROM dc " +
+      "JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_CONTACT ec ON ec.CONTACT_ID=dc.contact_id AND ec.ENGAGEMENT_TYPE='MEETING' " +
+      "JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_MEETING m ON m.ENGAGEMENT_ID=ec.ENGAGEMENT_ID " +
+      "WHERE m.MEETING_START_TIME >= '2026-08-27 00:00:00 -0700' GROUP BY 1), " +
+      "daily AS (SELECT o.bucket, o.CREATE_DATE d, COUNT(*) booked, SUM(COALESCE(mtg.held,0)) held, " +
+      "COUNT_IF(o.SAL_DATE IS NOT NULL) sals, COUNT_IF(o.TRIALING_DATE IS NOT NULL OR " + IN_TRIAL + ") trials " +
+      "FROM oura o LEFT JOIN mtg ON mtg.DEAL_ID=o.DEAL_ID GROUP BY 1,2), " +
+      "spend AS (SELECT PERIOD_DATE d, SUM(TOTAL_COST) c FROM ANALYTICS.GO_TO_MARKET.CAC_PERFORMANCE_BY_ATTRIBUTION_PERIOD " +
+      "WHERE PERIOD='date' AND PERIOD_DATE >= '2026-08-28' AND CHANNEL='facebook' AND AD_NAME ILIKE 'oura%' GROUP BY 1), " +
+      "day_tot AS (SELECT d, SUM(booked) tb FROM daily GROUP BY 1) " +
+      "SELECT daily.bucket, TO_CHAR(daily.d,'YYYY-MM-DD') d, daily.booked, daily.held, daily.sals, daily.trials, " +
+      "ROUND(COALESCE(spend.c,0)*daily.booked/NULLIF(day_tot.tb,0),0) ad_alloc " +
+      "FROM daily JOIN day_tot ON day_tot.d=daily.d LEFT JOIN spend ON spend.d=daily.d ORDER BY daily.d, daily.bucket " +
+      TAG('Daily $/SAL and $/Trial series refresh from the Oura Ring Campaign Tracker artifact');
+  }
+
+  // ── parsing ───────────────────────────────────────────────────────────
+  function asObject(p) {
+    if (typeof p === 'string') { try { return JSON.parse(p); } catch (e) { return null; } }
+    return p && typeof p === 'object' ? p : null;
+  }
+  function sfRows(payload) {
+    var p = asObject(payload), rs = p && p.result_set;
+    if (!rs || !rs.data) return null;
+    var cols = ((rs.resultSetMetaData && rs.resultSetMetaData.rowType) || []).map(function (c) { return c.name; });
+    return rs.data.map(function (r) { var o = {}; for (var i = 0; i < cols.length; i++) o[cols[i]] = r[i]; return o; });
+  }
+  // HubSpot answers a row query as one JSON record per content block, and an
+  // aggregate query as a TSV block. Handle both.
+  function hsRecords(payload) {
+    var p = asObject(payload);
+    var blocks = p && p.results ? p.results : null;
+    if (!blocks) return null;
+    var out = [], sawTsv = false;
+    for (var i = 0; i < blocks.length; i++) {
+      var c = blocks[i] && blocks[i].content;
+      if (typeof c !== 'string') continue;
+      if (c.indexOf('Dataset TSV:') > -1) { sawTsv = true; continue; }
+      try {
+        var rec = JSON.parse(c);
+        if (rec && rec.properties) out.push(rec.properties);
+      } catch (e) { /* narrative block, skip */ }
+    }
+    return out.length || !sawTsv ? out : [];
+  }
+  function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
+  function orNull(v) { return v === null || v === undefined || v === '' ? null : num(v); }
+
+  // ── formatting ────────────────────────────────────────────────────────
+  function money(v) { return v == null || !isFinite(v) ? '—' : '$' + Math.round(v).toLocaleString('en-US'); }
+  function pct(v) { return v == null || !isFinite(v) ? '—' : v.toFixed(1) + '%'; }
+  function int(v) { return v == null || !isFinite(v) ? '—' : Math.round(v).toLocaleString('en-US'); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+  function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888'; }
+
+  // ── state ─────────────────────────────────────────────────────────────
+  var S = {
+    live: false, ringCost: 349,
+    camp: SNAPSHOT.camp, bench: SNAPSHOT.bench, adCost: SNAPSHOT.adCost,
+    daily: SNAPSHOT.daily, stages: SNAPSHOT.stages,
+    hsErr: null, sfErr: null, mcp: null, ids: [], sig: ''
+  };
+  try { var sv = localStorage.getItem('oura.ringPrice'); if (sv) S.ringCost = num(sv) || 349; } catch (e) {}
+
+  var $ = function (id) { return document.getElementById(id); };
+  $('ringCost').value = S.ringCost;
+  $('ringCost').addEventListener('input', function () {
+    S.ringCost = num(this.value);
+    try { localStorage.setItem('oura.ringPrice', String(S.ringCost)); } catch (e) {}
+    renderTiles(); renderTable();
+  });
+
+  // ── error copy, branched by code ──────────────────────────────────────
+  function errCopy(err, server) {
+    var c = err && err.code;
+    if (c === 'needs_reauth') return ['Reconnect ' + server, 'Its credentials lapsed. Reconnect it in claude.ai Settings → Connectors, then refresh.'];
+    if (c === 'server_not_connected') return ['Add ' + server, 'No ' + server + ' connector is available to you. Add it in claude.ai Settings → Connectors.'];
+    if (c === 'selection_required') return ['Choose a ' + server + ' connector', 'You have more than one. Pick one when prompted, then refresh.'];
+    if (c === 'blocked_by_policy') return [server + ' is blocked', 'Org policy blocks this tool. An admin has to allow it.'];
+    if (c === 'approval_required') return [server + ' needs approval', 'Your org requires per-call approval, which artifacts cannot request yet.'];
+    if (c === 'not_granted' || c === 'capability_disabled' || c === 'capability_removed') return ['Connectors unavailable here', 'Open this page on claude.ai to reach your connectors.'];
+    if (c === 'server_unavailable') return [server + ' is unreachable', 'It did not answer. Retrying on the next refresh.'];
+    if (c === 'tool_error') return [server + ' rejected the query', (err && err.message) || 'The query ran and came back with an error.'];
+    if (c === 'not_in_manifest') return [server + ' is out of scope', 'This page was not published with access to that tool.'];
+    return [server + ' call failed', (err && err.message) || 'Unknown error.'];
+  }
+
+  // ── derived ───────────────────────────────────────────────────────────
+  function rows() {
+    var by = {};
+    S.camp.forEach(function (r) { by[r.bucket] = r; });
+    var out = [];
+    SEG_ORDER.forEach(function (s) { if (by[s]) { out.push(by[s]); delete by[s]; } });
+    Object.keys(by).forEach(function (k) { out.push(by[k]); });
+    return out;
+  }
+  function totals(rs) {
+    var t = { bucket: 'Total', booked: 0, outstanding: 0, dropped: 0, held: 0, sal_of_booked: 0, sal_of_held: 0, trials: 0, trials_of_held: 0, trials_secured: 0 };
+    rs.forEach(function (r) {
+      ['booked', 'outstanding', 'dropped', 'held', 'sal_of_booked', 'sal_of_held', 'trials', 'trials_of_held', 'trials_secured']
+        .forEach(function (k) { t[k] += num(r[k]); });
+    });
+    return t;
+  }
+  // Segment carries its share of booked meetings' worth of ad spend, plus a
+  // ring for every meeting held.
+  function cost(r, bookedTotal) {
+    var ad = bookedTotal ? S.adCost * (num(r.booked) / bookedTotal) : 0;
+    return ad + num(r.held) * S.ringCost;
+  }
+
+  // ── tiles ─────────────────────────────────────────────────────────────
+  function renderTiles() {
+    var rs = rows(), t = totals(rs);
+    var all = S.adCost + t.held * S.ringCost;
+    var perSal = t.sal_of_booked ? all / t.sal_of_booked : null;
+    var perTrial = t.trials ? all / t.trials : null;
+    var tiles = [
+      ['Campaign cost', money(all), money(S.adCost) + ' ads &middot; ' + money(t.held * S.ringCost) + ' rings'],
+      ['Demos booked', int(t.booked), int(t.outstanding) + ' still to come'],
+      ['Demos held', int(t.held), pct(t.booked ? 100 * t.held / t.booked : NaN) + ' of booked'],
+      ['SALs', int(t.sal_of_booked), pct(t.held ? 100 * t.sal_of_held / t.held : NaN) + ' of held'],
+      ['$ / SAL', money(perSal), '<b>' + int(t.trials) + '</b> in trial &middot; ' + money(perTrial) + '/trial'],
+      ['Rings shipped', int(t.held), 'at ' + money(S.ringCost) + ' each']
+    ];
+    $('tiles').innerHTML = tiles.map(function (x) {
+      return '<div class="tile"><span class="tile-k">' + x[0] + '</span><span class="tile-v">' + x[1] + '</span><span class="tile-n">' + x[2] + '</span></div>';
+    }).join('');
+  }
+
+  // ── the main table ────────────────────────────────────────────────────
+  function delta(actual, mark, higherIsBetter) {
+    if (!isFinite(actual) || mark == null) return '';
+    var d = actual - mark;
+    if (Math.abs(d) < 0.05) return '';
+    var good = higherIsBetter ? d > 0 : d < 0;
+    return '<span class="delta ' + (good ? 'up' : 'down') + '">' + (d > 0 ? '+' : '−') + Math.abs(d).toFixed(1) + 'pp</span>';
+  }
+  function deltaMoney(actual, mark) {
+    if (actual == null || mark == null) return '';
+    var d = actual - mark;
+    return '<span class="delta ' + (d < 0 ? 'up' : 'down') + '">' + (d > 0 ? '+' : '−') + money(Math.abs(d)) + '</span>';
+  }
+
+  function renderTable() {
+    var rs = rows(), t = totals(rs);
+    var head = '<thead><tr>' +
+      '<th>Segment</th><th>Booked</th><th>Outstanding</th><th>Dropped</th><th>Held</th><th>SALs</th>' +
+      '<th class="colgroup">SAL conv.<br>(of booked)</th><th>Team avg</th>' +
+      '<th class="colgroup">SAL conv.<br>(of held)</th><th>Team avg</th>' +
+      '<th class="colgroup">$ / SAL<br>(campaign)</th><th>Team avg<br>$/SAL (paid)</th>' +
+      '<th class="colgroup">Trials<br>secured</th><th>Trials</th>' +
+      '<th class="colgroup">% held<br>&rarr; trial</th><th>Team avg</th>' +
+      '<th class="colgroup">$ / Trial<br>(campaign)</th><th>Team avg<br>$/Trial (paid)</th>' +
+      '</tr></thead>';
+
+    function line(r, isTotal) {
+      var b = isTotal ? null : S.bench[r.bucket];
+      var salBooked = r.booked ? 100 * r.sal_of_booked / r.booked : NaN;
+      var salHeld = r.held ? 100 * r.sal_of_held / r.held : NaN;
+      var trialHeld = r.held ? 100 * r.trials_of_held / r.held : NaN;
+      var c = isTotal ? S.adCost + r.held * S.ringCost : cost(r, t.booked);
+      var perSal = r.sal_of_booked ? c / r.sal_of_booked : null;
+      var perTrial = r.trials ? c / r.trials : null;
+      var key = isTotal ? '' : '<span class="seg-key" style="background:var(' + SEG_VAR[r.bucket] + ')"></span>';
+      var bSalBooked = b ? b.sal_booked : null, bSalHeld = b ? b.sal_held : null;
+      var bCostSal = b ? b.cost_sal : null, bTrialHeld = b ? b.trial_held : null, bCostTrial = b ? b.cost_trial : null;
+
+      return '<tr' + (isTotal ? ' class="total"' : '') + '>' +
+        '<td class="seg">' + key + esc(r.bucket) + '</td>' +
+        '<td>' + int(r.booked) + '</td><td>' + int(r.outstanding) + '</td><td>' + int(r.dropped) + '</td>' +
+        '<td>' + int(r.held) + '</td><td>' + int(r.sal_of_booked) + '</td>' +
+        '<td class="metric colgroup">' + pct(salBooked) + delta(salBooked, bSalBooked, true) + '</td>' +
+        '<td class="bench">' + pct(bSalBooked) + '</td>' +
+        '<td class="metric colgroup">' + pct(salHeld) + delta(salHeld, bSalHeld, true) + '</td>' +
+        '<td class="bench">' + pct(bSalHeld) + '</td>' +
+        '<td class="money colgroup">' + money(perSal) + deltaMoney(perSal, bCostSal) + '</td>' +
+        '<td class="bench">' + money(bCostSal) + '</td>' +
+        '<td class="colgroup">' + int(r.trials_secured) + '</td><td>' + int(r.trials) + '</td>' +
+        '<td class="metric colgroup">' + pct(trialHeld) + delta(trialHeld, bTrialHeld, true) + '</td>' +
+        '<td class="bench">' + pct(bTrialHeld) + '</td>' +
+        '<td class="money colgroup">' + money(perTrial) + deltaMoney(perTrial, bCostTrial) + '</td>' +
+        '<td class="bench">' + money(bCostTrial) + '</td>' +
+        '</tr>';
+    }
+
+    $('tablewrap').innerHTML = '<table>' + head + '<tbody>' + rs.map(function (r) { return line(r, false); }).join('') + line(t, true) + '</tbody></table>';
+
+    var note = '<p class="panel-note" style="padding:11px 17px 0">Conversion of <b>booked</b> is held down while ' + int(t.outstanding) + ' demos are still ahead on the calendar; the benchmark cohorts have all finished running. Conversion of <b>held</b> is the fair read today.</p>';
+    if (S.sfErr) { var e = errCopy(S.sfErr, 'Snowflake'); note = '<div class="state err"><strong>' + esc(e[0]) + '</strong><span>' + esc(e[1]) + ' Showing the last snapshot.</span><code>' + esc(S.sfErr.code) + '</code></div>'; }
+    else if (!S.live) note = '<p class="snapnote">Snapshot from ' + esc(new Date(SNAPSHOT.at).toLocaleString()) + ' · waiting on live results…</p>';
+    $('tablenote').innerHTML = note;
+  }
+
+  // ── state mix ─────────────────────────────────────────────────────────
+  function renderMix() {
+    var rs = rows();
+    var all = rs.concat([totals(rs)]);
+    $('mix').innerHTML = all.map(function (r) {
+      if (!num(r.booked)) return '';
+      var parts = [['held', num(r.held)], ['pending', num(r.outstanding)], ['lost', num(r.dropped)]];
+      var bar = parts.map(function (p) {
+        if (!p[1]) return '';
+        var share = p[1] / num(r.booked);
+        return '<div class="mix-seg ' + p[0] + '" style="width:' + (share * 100).toFixed(2) + '%">' + (share > 0.1 ? p[1] : '') + '</div>';
+      }).join('');
+      return '<div class="mix-row"><span class="mix-label">' + esc(r.bucket) + '</span>' +
+        '<div class="mix-bar" role="img" aria-label="' + esc(r.bucket + ': ' + r.held + ' held, ' + r.outstanding + ' outstanding, ' + r.dropped + ' dropped') + '">' + bar + '</div></div>';
+    }).join('');
+  }
+
+  // ── charts: two small multiples over one shared day axis ──────────────
+  function dayList() {
+    var days = [];
+    S.daily.forEach(function (r) { if (days.indexOf(r.d) < 0) days.push(r.d); });
+    return days.sort();
+  }
+  function label(d) {
+    var p = String(d).split('-');
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][num(p[1]) - 1] + ' ' + num(p[2]);
+  }
+
+  function spendChart(days) {
+    var W = 620, H = 150, PL = 8, PR = 8, PT = 22, PB = 26;
+    var iw = W - PL - PR, ih = H - PT - PB;
+    var vals = days.map(function (d) {
+      return S.daily.reduce(function (a, r) { return r.d === d ? a + num(r.ad) : a; }, 0);
+    });
+    var max = Math.max.apply(null, vals.concat([1]));
+    var slot = iw / Math.max(days.length, 1), bw = Math.min(slot - 12, 66);
+    var col = cssVar('--spend');
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Facebook spend on Oura creatives per day">';
+    s += '<line class="grid-line" x1="' + PL + '" y1="' + (PT + ih) + '" x2="' + (W - PR) + '" y2="' + (PT + ih) + '"/>';
+    days.forEach(function (d, i) {
+      var v = vals[i], h = (v / max) * ih, x = PL + slot * i + (slot - bw) / 2, y = PT + ih - h;
+      if (v > 0) s += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(h, 2).toFixed(1) + '" rx="4" fill="' + col + '"><title>' + esc(label(d) + ' · ' + money(v)) + '</title></rect>';
+      s += '<text class="bar-label" x="' + (x + bw / 2).toFixed(1) + '" y="' + (v > 0 ? y - 6 : PT + ih - 6).toFixed(1) + '" text-anchor="middle">' + esc(money(v)) + '</text>';
+      s += '<text class="axis-text" x="' + (x + bw / 2).toFixed(1) + '" y="' + (PT + ih + 16) + '" text-anchor="middle">' + esc(label(d)) + '</text>';
+    });
+    return s + '</svg>';
+  }
+
+  function bookedChart(days) {
+    var W = 620, H = 172, PL = 8, PR = 8, PT = 22, PB = 26;
+    var iw = W - PL - PR, ih = H - PT - PB;
+    var byDay = {};
+    days.forEach(function (d) { byDay[d] = {}; });
+    S.daily.forEach(function (r) { if (byDay[r.d]) byDay[r.d][r.bucket] = num(r.booked); });
+    var tot = days.map(function (d) { return SEG_ORDER.reduce(function (a, s) { return a + (byDay[d][s] || 0); }, 0); });
+    var max = Math.max.apply(null, tot.concat([1]));
+    var slot = iw / Math.max(days.length, 1), bw = Math.min(slot - 12, 66);
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Demos booked per day, stacked by segment">';
+    s += '<line class="grid-line" x1="' + PL + '" y1="' + (PT + ih) + '" x2="' + (W - PR) + '" y2="' + (PT + ih) + '"/>';
+    days.forEach(function (d, i) {
+      var x = PL + slot * i + (slot - bw) / 2, yCursor = PT + ih;
+      SEG_ORDER.forEach(function (seg) {
+        var v = byDay[d][seg] || 0;
+        if (!v) return;
+        var h = (v / max) * ih;
+        yCursor -= h;
+        s += '<rect x="' + x.toFixed(1) + '" y="' + yCursor.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(h - 2, 1).toFixed(1) + '" rx="2" fill="' + cssVar(SEG_VAR[seg]) + '">' +
+          '<title>' + esc(label(d) + ' · ' + seg + ' · ' + v + ' booked') + '</title></rect>';
+        if (h > 15) s += '<text class="stack-label" x="' + (x + bw / 2).toFixed(1) + '" y="' + (yCursor + h / 2 + 2).toFixed(1) + '" text-anchor="middle">' + v + '</text>';
+      });
+      if (tot[i] > 0) s += '<text class="bar-label" x="' + (x + bw / 2).toFixed(1) + '" y="' + (PT + ih - (tot[i] / max) * ih - 6).toFixed(1) + '" text-anchor="middle">' + tot[i] + '</text>';
+      s += '<text class="axis-text" x="' + (x + bw / 2).toFixed(1) + '" y="' + (PT + ih + 16) + '" text-anchor="middle">' + esc(label(d)) + '</text>';
+    });
+    return s + '</svg>';
+  }
+
+  function renderCharts() {
+    var days = dayList();
+    if (!days.length) { $('charts').innerHTML = '<div class="state">No spend or bookings have landed yet.</div>'; return; }
+    var legend = '<ul class="legend">' + SEG_ORDER.map(function (s) {
+      return '<li><span class="swatch" style="background:var(' + SEG_VAR[s] + ')"></span>' + esc(s) + '</li>';
+    }).join('') + '</ul>';
+    $('charts').innerHTML =
+      '<div><p class="chart-cap">Facebook spend on Oura creatives</p>' + spendChart(days) + '</div>' +
+      '<div><p class="chart-cap">Demos booked, by segment</p>' + legend + bookedChart(days) + '</div>';
+  }
+
+  // ── HubSpot pulse ─────────────────────────────────────────────────────
+  function renderPulse() {
+    if (S.hsErr) {
+      var e = errCopy(S.hsErr, 'HubSpot');
+      $('pulse').innerHTML = '<div class="state err"><strong>' + esc(e[0]) + '</strong><span>' + esc(e[1]) + '</span><code>' + esc(S.hsErr.code) + '</code></div>';
+      return;
+    }
+    var order = ['Opportunity Identified', 'Evaluation', 'Trial Secured', 'Trialing', 'Closed won', 'Closed lost'];
+    var keys = order.filter(function (k) { return S.stages[k] != null; })
+      .concat(Object.keys(S.stages).filter(function (k) { return order.indexOf(k) < 0; }));
+    var total = keys.reduce(function (a, k) { return a + S.stages[k]; }, 0);
+    var warehouse = totals(rows()).booked;
+    var lead = total - warehouse;
+    var html = keys.map(function (k) {
+      return '<div class="pulse-row"><span class="pulse-k">' + esc(k) + '</span><span class="pulse-v">' + int(S.stages[k]) + '</span></div>';
+    }).join('');
+    html += '<div class="pulse-row" style="background:var(--surface-2)"><span class="pulse-k"><b>On the promo list</b></span><span class="pulse-v">' + int(total) + '</span></div>';
+    var note = lead > 0
+      ? '<p class="panel-note">HubSpot is <b>' + int(lead) + '</b> ahead of the warehouse table above, which is the sync lag the Trials bridge is there to cover.'
+      : '<p class="panel-note">The warehouse has caught up to HubSpot.';
+    $('pulse').innerHTML = '<div class="pulse">' + html + '</div>' + note + '</p>';
+  }
+
+  function renderAll() { renderTiles(); renderTable(); renderMix(); renderCharts(); renderPulse(); }
+  renderAll();
+
+  // ── status rail ───────────────────────────────────────────────────────
+  function chip(dotId, textId, cls, text) { $(dotId).className = 'dot' + (cls ? ' ' + cls : ''); $(textId).textContent = text; }
+  function tickClock() {
+    var hhmm = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    chip('d-clock', 's-clock', S.mcp === false ? 'down' : (S.live ? 'live' : 'warn'), (S.mcp === false ? 'Snapshot' : (S.live ? 'Live' : 'Loading')) + ' · ' + hhmm);
+  }
+  setInterval(tickClock, 20000);
+  tickClock();
+
+  // ── wire up ───────────────────────────────────────────────────────────
+  var sfUnsubs = [];
+
+  function applySummary(rs) {
+    var camp = [], bench = {}, ad = 0;
+    rs.forEach(function (r) {
+      camp.push({
+        bucket: r.BUCKET, booked: num(r.BOOKED), outstanding: num(r.OUTSTANDING), dropped: num(r.DROPPED), held: num(r.HELD),
+        sal_of_booked: num(r.SAL_OF_BOOKED), sal_of_held: num(r.SAL_OF_HELD), trials: num(r.TRIALS),
+        trials_of_held: num(r.TRIALS_OF_HELD), trials_secured: num(r.TRIALS_SECURED)
+      });
+      if (orNull(r.PCT_SAL_OF_BOOKED) != null) {
+        bench[r.BUCKET] = {
+          sal_booked: orNull(r.PCT_SAL_OF_BOOKED), sal_held: orNull(r.PCT_SAL_OF_HELD), cost_sal: orNull(r.PAID_COST_PER_SAL),
+          trial_held: orNull(r.PCT_TRIAL_OF_HELD), cost_trial: orNull(r.PAID_COST_PER_TRIAL)
+        };
+      }
+      ad = num(r.C);
+    });
+    if (!camp.length) return false;
+    S.camp = camp; S.bench = bench; S.adCost = ad; S.live = true;
+    return true;
+  }
+  function applyDaily(rs) {
+    S.daily = rs.map(function (r) {
+      return { bucket: r.BUCKET, d: r.D, booked: num(r.BOOKED), held: num(r.HELD), sals: num(r.SALS), trials: num(r.TRIALS), ad: num(r.AD_ALLOC) };
+    });
+    return true;
+  }
+
+  function sfHandler(apply) {
+    return function (ev) {
+      if (ev.type === 'error') {
+        S.sfErr = ev.error;
+        chip('d-sf', 's-sf', ev.error.code === 'server_unavailable' ? 'warn' : 'down', 'Snowflake');
+        renderAll(); tickClock(); return;
+      }
+      var rs = sfRows(ev.result && ev.result.payload);
+      if (!rs) S.sfErr = { code: 'tool_error', message: 'Snowflake answered in a shape this page could not read.' };
+      else if (apply(rs)) { S.sfErr = null; chip('d-sf', 's-sf', 'live', 'Snowflake'); }
+      renderAll(); tickClock();
+    };
+  }
+
+  function startSnowflake(mcp, ids, trialing, secured) {
+    sfUnsubs.forEach(function (u) { try { u(); } catch (e) {} });
+    sfUnsubs = [];
+    sfUnsubs.push(mcp.watchTool(SF, 'sql_exec', { sql: summarySql(ids, trialing, secured) }, sfHandler(applySummary), { refetchInterval: 60000, cache: { staleTime: 45000 } }));
+    sfUnsubs.push(mcp.watchTool(SF, 'sql_exec', { sql: dailySql(ids, trialing) }, sfHandler(applyDaily), { refetchInterval: 180000, cache: { staleTime: 150000 } }));
+  }
+
+  function offline(copy) {
+    S.mcp = false;
+    chip('d-hs', 's-hs', 'down', 'HubSpot');
+    chip('d-sf', 's-sf', 'down', 'Snowflake');
+    $('tablenote').innerHTML = '<div class="state err"><strong>' + esc(copy[0]) + '</strong><span>' + esc(copy[1]) +
+      ' The page is showing its snapshot from ' + esc(new Date(SNAPSHOT.at).toLocaleString()) + '.</span></div>';
+    tickClock();
+  }
+
+  var bridge = (typeof claude !== 'undefined' && claude && typeof claude.use === 'function') ? claude.use('mcp') : null;
+  if (!bridge) {
+    offline(['Connectors are not available in this view', 'Open this page on claude.ai with the HubSpot and Snowflake connectors enabled and it fills itself in.']);
+    return;
+  }
+  bridge.then(function (mcp) {
+    if (!mcp) {
+      offline(['Connectors are not available in this view', 'Open this page on claude.ai with the HubSpot and Snowflake connectors enabled and it fills itself in.']);
+      return;
+    }
+    S.mcp = mcp;
+    chip('d-hs', 's-hs', 'warn', 'HubSpot');
+    chip('d-sf', 's-sf', 'warn', 'Snowflake');
+
+    mcp.watchTool(HS, 'query_crm_data', { sql: Q_HUBSPOT, verbosityLevel: 'LOW' }, function (ev) {
+      if (ev.type === 'error') {
+        S.hsErr = ev.error;
+        chip('d-hs', 's-hs', ev.error.code === 'server_unavailable' ? 'warn' : 'down', 'HubSpot');
+        renderAll(); tickClock(); return;
+      }
+      var recs = hsRecords(ev.result && ev.result.payload);
+      if (!recs || !recs.length) {
+        S.hsErr = { code: 'tool_error', message: 'The promo list came back empty or in an unreadable shape.' };
+        renderAll(); tickClock(); return;
+      }
+      S.hsErr = null;
+      chip('d-hs', 's-hs', 'live', 'HubSpot');
+
+      var ids = [], trialing = [], secured = [], stages = {};
+      recs.forEach(function (p) {
+        var id = String(p.hs_object_id || '').replace(/\D/g, '');
+        if (!id) return;
+        ids.push(id);
+        var st = String(p.dealstage || '');
+        if (st === TRIALING_STAGE) trialing.push(id);
+        if (st === SECURED_STAGE) secured.push(id);
+        var name = STAGE[st] || 'Other stage';
+        stages[name] = (stages[name] || 0) + 1;
+      });
+      S.stages = stages;
+      S.ids = ids;
+
+      var sig = ids.slice().sort().join(',') + '|' + trialing.slice().sort().join(',') + '|' + secured.slice().sort().join(',');
+      if (sig !== S.sig) { S.sig = sig; startSnowflake(mcp, ids, trialing, secured); }
+      renderAll(); tickClock();
+    }, { refetchInterval: 60000, cache: { staleTime: 45000 } });
+
+    $('refresh').addEventListener('click', function () {
+      var btn = this;
+      btn.disabled = true; btn.textContent = 'Refreshing…';
+      mcp.invalidate().catch(function () {}).then(function () {
+        setTimeout(function () { btn.disabled = false; btn.textContent = 'Refresh now'; }, 2500);
+      });
+    });
+  }, function () {
+    offline(['Connectors could not be reached', 'This view could not start the connector bridge. Reload on claude.ai.']);
+  });
+})();
+</script>
