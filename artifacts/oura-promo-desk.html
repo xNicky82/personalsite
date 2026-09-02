@@ -18,9 +18,11 @@
   --held: #1baf7a; --held-soft: #e2f5ee;
   --pending: #a9a29a; --pending-soft: #efece8;
   --lost: #e34948; --lost-soft: #fbe8e7;
-  --spend: #4d4740;
+  --spend: #4d4740; --spend-dim: #cec6bd;
   --good: #157f5c; --bad: #c0392f;
   --shadow: 0 1px 2px rgba(23,20,15,.05), 0 8px 24px -16px rgba(23,20,15,.24);
+  --fade: rgba(255,255,255,0);
+  --fade-solid: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -33,9 +35,11 @@
     --held: #199e70; --held-soft: #10261f;
     --pending: #7d756c; --pending-soft: #241f1b;
     --lost: #e66767; --lost-soft: #2b1616;
-    --spend: #b6ada4;
+    --spend: #b6ada4; --spend-dim: #453e38;
     --good: #3fbf8f; --bad: #f07a72;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+    --fade: rgba(25,22,20,0);
+    --fade-solid: #191614;
   }
 }
 :root[data-theme="dark"] {
@@ -48,9 +52,11 @@
   --held: #199e70; --held-soft: #10261f;
   --pending: #7d756c; --pending-soft: #241f1b;
   --lost: #e66767; --lost-soft: #2b1616;
-  --spend: #b6ada4;
+  --spend: #b6ada4; --spend-dim: #453e38;
   --good: #3fbf8f; --bad: #f07a72;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  --fade: rgba(25,22,20,0);
+  --fade-solid: #191614;
 }
 
 * { box-sizing: border-box; }
@@ -87,27 +93,72 @@ h1 { font-family: 'Archivo', ui-sans-serif, system-ui, sans-serif; font-variatio
 .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow); }
 .panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; padding: 15px 17px 12px; border-bottom: 1px solid var(--rule); }
 .panel-title { font-family: 'Archivo', sans-serif; font-variation-settings: 'wdth' 112, 'wght' 620; font-size: 15px; letter-spacing: -.005em; margin: 0; }
-.panel-note { font-size: 12px; color: var(--ink-3); margin: 3px 0 0; max-width: 70ch; }
+.panel-note { font-size: 12px; color: var(--ink-3); margin: 3px 0 0; max-width: 74ch; }
 .panel-body { padding: 15px 17px 18px; }
 
-.tablewrap { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; min-width: 1240px; }
-th, td { text-align: right; padding: 10px 9px; white-space: nowrap; }
-th:first-child, td:first-child { text-align: left; padding-left: 17px; position: sticky; left: 0; background: var(--surface); z-index: 1; }
-th:last-child, td:last-child { padding-right: 17px; }
+/* ── day picker ── */
+.daybar { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding: 12px 17px; border-bottom: 1px solid var(--rule); background: var(--surface-2); }
+.daybar-k { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); margin-right: 3px; }
+button.day {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums;
+  color: var(--ink-2); background: var(--surface); border: 1px solid var(--rule-strong);
+  border-radius: 7px; padding: 5px 10px; cursor: pointer; white-space: nowrap;
+}
+button.day:hover { color: var(--ink); border-color: var(--ink-3); }
+button.day[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface); font-weight: 600; }
+button.day .n { opacity: .62; margin-left: 6px; }
+
+/* ── the segment table ── */
+.tablescroll { overflow-x: auto; position: relative; }
+.tableedge { position: relative; }
+.tableedge::after {
+  content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 34px; pointer-events: none;
+  background: linear-gradient(to right, var(--fade), var(--fade-solid)); border-radius: 0 12px 12px 0;
+}
+table { border-collapse: collapse; width: 100%; min-width: 1180px; }
+th, td { text-align: right; padding: 10px 9px; white-space: nowrap; vertical-align: middle; }
+th:first-child, td:first-child { text-align: left; padding-left: 17px; position: sticky; left: 0; background: var(--surface); z-index: 2; }
+th:last-child, td:last-child { padding-right: 40px; }
 thead th { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); vertical-align: bottom; line-height: 1.35; border-bottom: 1px solid var(--rule-strong); padding-bottom: 9px; }
 tbody td { border-bottom: 1px solid var(--rule); font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 13px; }
-tbody td.seg { font-family: 'Public Sans', sans-serif; font-weight: 600; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+tbody td.seg { font-family: 'Public Sans', sans-serif; font-weight: 600; font-size: 13.5px; }
+.seg-inner { display: inline-flex; align-items: center; gap: 8px; }
 tbody tr.total td { background: var(--surface-2); border-bottom: none; font-weight: 600; }
 tbody tr.total td:first-child { background: var(--surface-2); }
 .seg-key { width: 9px; height: 9px; border-radius: 2px; flex: none; }
-td.metric { font-weight: 600; }
-td.money { font-weight: 600; }
-td.bench { color: var(--ink-3); }
-.delta { font-size: 10.5px; display: block; margin-top: 1px; font-weight: 500; }
-.delta.up { color: var(--good); }
-.delta.down { color: var(--bad); }
+td.metric, td.money { font-weight: 600; }
+td.beat { color: var(--good); }
+td.miss { color: var(--bad); }
+td.bench { color: var(--ink-3); font-weight: 400; }
 .colgroup { border-left: 1px solid var(--rule); }
+
+/* SAL drill-down trigger */
+button.drill {
+  font: inherit; color: inherit; background: none; border: 0; padding: 0 2px; cursor: pointer;
+  border-bottom: 1px dashed var(--rule-strong); font-variant-numeric: tabular-nums;
+}
+button.drill:hover { border-bottom-color: var(--accent); color: var(--accent); }
+button.drill[aria-expanded="true"] { color: var(--accent); border-bottom-style: solid; border-bottom-color: var(--accent); }
+button.drill[disabled] { border-bottom: 0; cursor: default; opacity: .6; }
+
+.people { border-top: 1px solid var(--rule); background: var(--surface-2); }
+.people-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; padding: 13px 17px 10px; }
+.people-title { font-family: 'Archivo', sans-serif; font-variation-settings: 'wdth' 112, 'wght' 620; font-size: 13.5px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.people-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(288px, 1fr)); gap: 1px; border-top: 1px solid var(--rule); }
+/* A 1px ring rather than a grid background, so a part-filled last row leaves
+   the panel surface showing instead of a stray block of divider colour. */
+.person { background: var(--surface); box-shadow: 0 0 0 1px var(--rule); padding: 11px 14px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.person-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.person-name { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person-co { font-size: 12px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person-meta { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person a { color: var(--ink-3); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+.person a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.pill { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .05em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex: none; }
+.pill.trialing { background: var(--held-soft); color: var(--good); }
+.pill.secured { background: var(--accent-soft); color: var(--accent); }
+.pill.open { background: var(--pending-soft); color: var(--ink-2); }
+.pill.lost { background: var(--lost-soft); color: var(--bad); }
 
 .legend { display: flex; flex-wrap: wrap; gap: 13px; margin: 0 0 13px; padding: 0; list-style: none; }
 .legend li { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
@@ -117,18 +168,21 @@ td.bench { color: var(--ink-3); }
 .mix-row { display: grid; grid-template-columns: 132px 1fr; align-items: center; gap: 12px; }
 .mix-label { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
 .mix-bar { display: flex; height: 26px; border-radius: 5px; overflow: hidden; gap: 2px; background: var(--rule); }
-.mix-seg { display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; min-width: 0; overflow: hidden; }
-.mix-seg.held { background: var(--held); color: #fff; }
-.mix-seg.pending { background: var(--pending); color: #fff; }
-.mix-seg.lost { background: var(--lost); color: #fff; }
+.mix-seg { display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; min-width: 0; overflow: hidden; color: #fff; }
+.mix-seg.held { background: var(--held); }
+.mix-seg.pending { background: var(--pending); }
+.mix-seg.lost { background: var(--lost); }
 
 .charts { display: flex; flex-direction: column; gap: 22px; }
 .chart-cap { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 8px; }
 svg { display: block; width: 100%; height: auto; overflow: visible; }
 .grid-line { stroke: var(--rule); stroke-width: 1; }
 .axis-text { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: var(--ink-3); }
+.axis-text.sel { fill: var(--ink); font-weight: 600; }
 .bar-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; fill: var(--ink-2); }
 .stack-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; font-weight: 600; fill: #fff; }
+.hit { fill: transparent; cursor: pointer; }
+.selbox { fill: none; stroke: var(--accent); stroke-width: 1.5; }
 
 .pulse { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 9px; overflow: hidden; }
 .pulse-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); padding: 10px 13px; }
@@ -145,10 +199,13 @@ button.ghost[disabled] { opacity: .55; cursor: default; }
 
 .state { padding: 15px 17px; font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 5px; }
 .state strong { font-weight: 600; color: var(--ink); }
-.state.err { background: var(--lost-soft); border-radius: 9px; }
+.state.err { background: var(--lost-soft); border-radius: 9px; margin: 13px 17px; }
 .state code { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ink-3); }
-.skeleton { color: var(--ink-3); font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
-.snapnote { font-size: 11.5px; color: var(--accent); font-family: 'IBM Plex Mono', monospace; padding: 9px 17px 0; }
+.snapnote { font-size: 11.5px; color: var(--accent); font-family: 'IBM Plex Mono', monospace; padding: 10px 17px 0; margin: 0; }
+.readnote { font-size: 12px; color: var(--ink-3); padding: 11px 17px 0; margin: 0; }
+.readnote b { font-weight: 600; }
+.readnote .g { color: var(--good); font-weight: 600; }
+.readnote .r { color: var(--bad); font-weight: 600; }
 
 details.method { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
 details.method > summary { cursor: pointer; padding: 14px 17px; font-family: 'Archivo', sans-serif; font-variation-settings: 'wdth' 112, 'wght' 600; font-size: 14px; list-style: none; display: flex; align-items: center; gap: 9px; }
@@ -193,7 +250,9 @@ details.method[open] > summary::before { content: '\2212'; }
         <button class="ghost" id="refresh" type="button">Refresh now</button>
       </div>
     </div>
-    <div class="tablewrap" id="tablewrap"></div>
+    <div class="daybar" id="daybar" role="group" aria-label="Filter to the demos booked on one day"></div>
+    <div class="tableedge"><div class="tablescroll" id="tablewrap"></div></div>
+    <div id="people"></div>
     <div id="tablenote"></div>
   </section>
 
@@ -202,7 +261,7 @@ details.method[open] > summary::before { content: '\2212'; }
       <div class="panel-head">
         <div>
           <h2 class="panel-title">Spend and demand, by day</h2>
-          <p class="panel-note">Facebook reports spend once a day, so this pair settles daily while everything above moves by the minute.</p>
+          <p class="panel-note">Facebook reports spend once a day, so this pair settles daily while everything above moves by the minute. Click a bar to filter the table to that day.</p>
         </div>
       </div>
       <div class="panel-body charts" id="charts"></div>
@@ -213,7 +272,7 @@ details.method[open] > summary::before { content: '\2212'; }
         <div class="panel-head">
           <div>
             <h2 class="panel-title">Where the demos stand</h2>
-            <p class="panel-note">Held, still on the calendar, or gone.</p>
+            <p class="panel-note" id="mixnote">Held, still on the calendar, or gone.</p>
           </div>
         </div>
         <div class="panel-body">
@@ -243,11 +302,11 @@ details.method[open] > summary::before { content: '\2212'; }
     <div class="method-body">
       <div class="def">
         <h4>The pipeline</h4>
-        <p>On load, HubSpot returns the live membership and stage of the <b>Oura Ring Promo &mdash; Demos/Deals</b> list. Those deal IDs go straight into two Snowflake queries that build the table and the daily cohort series, and every ratio and dollar figure is worked out in the page from those results plus the ring price above.</p>
+        <p>On load, HubSpot returns the live membership and stage of the <b>Oura Ring Promo &mdash; Demos/Deals</b> list. Those deal IDs go straight into three Snowflake queries that build the table, the daily cohort series and the SAL roster, and every ratio and dollar figure is worked out in the page from those results plus the ring price above.</p>
       </div>
       <div class="def">
         <h4>Segment</h4>
-        <p>The deal owner's HubSpot team, strictly: Commercial In-House 1/2, Enterprise 1/2/3/EMEA, SMB Law. Anything else is <b>Other/Unassigned</b>.</p>
+        <p>The deal owner's HubSpot team, strictly: Commercial In-House 1/2, Enterprise 1/2/3/EMEA, SMB Law. Anything else is <b>Other/Unassigned</b>, which has no benchmark because the benchmark is built per team.</p>
       </div>
       <div class="def">
         <h4>Booked &middot; Outstanding &middot; Dropped &middot; Held</h4>
@@ -255,23 +314,23 @@ details.method[open] > summary::before { content: '\2212'; }
       </div>
       <div class="def">
         <h4>SALs, Trials, Trials Secured</h4>
-        <p><b>SALs</b> are deals with a SAL date. <b>Trials</b> are deals that entered Trialing in the warehouse or sit in Trialing in live HubSpot, which bridges the sync lag and only ever ratchets up. <b>Trials Secured</b> are in Trial Secured but not yet Trialing, and feed no ratio.</p>
+        <p><b>SALs</b> are deals with a SAL date, and the number is clickable to see who they are. <b>Trials</b> are deals that entered Trialing in the warehouse or sit in Trialing in live HubSpot, which bridges the sync lag and only ever ratchets up. <b>Trials Secured</b> are in Trial Secured but not yet Trialing, and feed no ratio.</p>
       </div>
       <div class="def">
         <h4>Cost</h4>
         <p>Ad spend is Facebook spend since 28 Aug on Oura creatives only. Each segment carries its share of booked meetings' worth of that spend, plus the ring price for every meeting held. <b>$/SAL</b> and <b>$/Trial</b> divide that by SALs or Trials.</p>
       </div>
       <div class="def">
+        <h4>Picking a day</h4>
+        <p>A day filters the table to the demos booked <b>on that day</b>, and narrows ad spend to that day's Facebook spend, so the cost columns stay honest. The benchmark columns never change, because they are mature cohorts rather than anything happening this week.</p>
+      </div>
+      <div class="def">
         <h4>Team benchmarks</h4>
         <p>Mature cohorts only, Jan 2025 to May 2026. Conversion of booked is SALs over leads; conversion of held is measured among leads that actually held a meeting. Paid $/SAL and $/Trial use attributed paid-media cost shares over paid-attributed outcomes, so it is paid media, not blended CAC.</p>
       </div>
       <div class="def">
-        <h4>Spam</h4>
-        <p>Campaign columns drop deals flagged spam or closed lost for <b>Spam/Litigator</b>, which matters on a giveaway.</p>
-      </div>
-      <div class="def">
         <h4>Freshness</h4>
-        <p>HubSpot and Snowflake are both re-queried every 60 seconds. The warehouse itself pulls from HubSpot and the ad platforms about hourly, so the live pulse panel leads and the table settles behind it. The snapshot this page ships with is republished hourly.</p>
+        <p>HubSpot and Snowflake are both re-queried every 60 seconds. The warehouse itself pulls from HubSpot and the ad platforms about hourly, so the live pulse panel leads and the table settles behind it. Deals flagged spam or closed lost for <b>Spam/Litigator</b> are dropped throughout, which matters on a giveaway.</p>
       </div>
     </div>
   </details>
@@ -284,13 +343,16 @@ details.method[open] > summary::before { content: '\2212'; }
 
   var SF = 'Snowflake', HS = 'HubSpot';
   var LIST_ID = '15738';
+  var PORTAL = '20853254';
   var STAGE = { '196326666': 'Opportunity Identified', '35148648': 'Opportunity Identified', '196326667': 'Evaluation', '936925777': 'Trial Secured', '196326668': 'Trialing', '196326672': 'Closed lost', '196326671': 'Closed won' };
   var TRIALING_STAGE = '196326668', SECURED_STAGE = '936925777';
   var SEG_ORDER = ['SMB Law', 'Comm In-House', 'Enterprise', 'Other/Unassigned'];
   var SEG_VAR = { 'SMB Law': '--seg-1', 'Comm In-House': '--seg-2', 'Enterprise': '--seg-3', 'Other/Unassigned': '--seg-4' };
 
   // Fallback snapshot — republished hourly. Rendered instantly so the page is
-  // never blank, then replaced the moment live results land.
+  // never blank, then replaced the moment live results land. Deliberately
+  // carries no people: the SAL roster is fetched live, per viewer, through
+  // their own connector rather than baked into the page.
   var SNAPSHOT = {
     at: '2026-09-02T20:32:00Z',
     camp: [
@@ -330,7 +392,7 @@ details.method[open] > summary::before { content: '\2212'; }
     stages: { 'Opportunity Identified': 121, 'Evaluation': 20, 'Trial Secured': 9, 'Trialing': 13, 'Closed lost': 43 }
   };
 
-  // ── SQL builders ──────────────────────────────────────────────────────
+  // ── SQL ───────────────────────────────────────────────────────────────
   var Q_HUBSPOT = "SELECT hs_object_id, dealstage FROM DEAL WHERE hs_crm_search.ilsListIds = '" + LIST_ID + "' LIMIT 500";
 
   var BUCKET_CASE =
@@ -338,17 +400,18 @@ details.method[open] > summary::before { content: '\2212'; }
     "WHEN HUBSPOT_TEAM_NAME ILIKE 'Enterprise%' THEN 'Enterprise' " +
     "WHEN HUBSPOT_TEAM_NAME = 'SMB Law' THEN 'SMB Law' ELSE 'Other/Unassigned' END AS bucket";
 
-  var TAG = function (intent) {
+  function TAG(intent) {
     return '/* {"original_question": "Live Oura Ring campaign tracker with SALs, $/SAL, and team benchmarks", "query_intent": "' + intent + '"} */';
-  };
+  }
+  function dayClause(day) { return day ? " AND CREATE_DATE = '" + day + "'" : ''; }
 
-  function summarySql(ids, trialing, secured) {
+  function summarySql(ids, trialing, secured, day) {
     var IN_TRIAL = trialing.length ? "o.DEAL_ID IN (" + trialing.join(',') + ")" : "FALSE";
     var IN_SEC = secured.length ? "o.DEAL_ID IN (" + secured.join(',') + ")" : "FALSE";
     var IS_TRIAL = "(o.TRIALING_DATE IS NOT NULL OR " + IN_TRIAL + ")";
     return "WITH oura AS (SELECT DEAL_ID, SAL_DATE, TRIALING_DATE, TRIAL_SECURED_ENTRY_DATE, IS_CLOSED_LOST, ALL_CONTACT_IDS, " + BUCKET_CASE +
       " FROM ANALYTICS.GO_TO_MARKET.HUBSPOT_DEAL WHERE DEAL_ID IN (" + ids.join(',') + ")" +
-      " AND COALESCE(IS_SPAM, FALSE) = FALSE AND COALESCE(CLOSED_LOST_SUB_REASON,'') <> 'Spam/Litigator'), " +
+      " AND COALESCE(IS_SPAM, FALSE) = FALSE AND COALESCE(CLOSED_LOST_SUB_REASON,'') <> 'Spam/Litigator'" + dayClause(day) + "), " +
       "dc AS (SELECT o.DEAL_ID, f.VALUE::number AS contact_id FROM oura o, LATERAL FLATTEN(input => o.ALL_CONTACT_IDS) f), " +
       "mtg AS (SELECT dc.DEAL_ID, MAX(1) AS booked, MAX(IFF(m.MEETING_OUTCOME='COMPLETED',1,0)) held, " +
       "MAX(IFF(COALESCE(m.MEETING_OUTCOME,'SCHEDULED') IN ('SCHEDULED','RESCHEDULED') AND m.MEETING_START_TIME > CURRENT_TIMESTAMP,1,0)) pending " +
@@ -383,7 +446,8 @@ details.method[open] > summary::before { content: '\2212'; }
       "bench AS (SELECT p.bucket, p.pct_sal_of_booked, p.pct_sal_of_held, bc.paid_cost_per_sal, p.pct_trial_of_held, bc.paid_cost_per_trial " +
       "FROM benchpct p LEFT JOIN benchcost bc ON bc.bucket=p.bucket), " +
       "adcost AS (SELECT COALESCE(SUM(TOTAL_COST),0) c FROM ANALYTICS.GO_TO_MARKET.CAC_PERFORMANCE_BY_ATTRIBUTION_PERIOD " +
-      "WHERE PERIOD='date' AND PERIOD_DATE >= '2026-08-28' AND CHANNEL='facebook' AND AD_NAME ILIKE 'oura%') " +
+      "WHERE PERIOD='date' AND PERIOD_DATE >= '2026-08-28' AND CHANNEL='facebook' AND AD_NAME ILIKE 'oura%'" +
+      (day ? " AND PERIOD_DATE = '" + day + "'" : '') + ") " +
       "SELECT camp.bucket, camp.booked, camp.dropped, camp.held, camp.sal_of_booked, camp.sal_of_held, bench.pct_sal_of_held, bench.paid_cost_per_sal, " +
       "camp.trials, camp.trials_of_held, bench.pct_trial_of_held, bench.paid_cost_per_trial, bench.pct_sal_of_booked, camp.outstanding, camp.trials_secured, adcost.c " +
       "FROM camp LEFT JOIN bench ON bench.bucket=camp.bucket CROSS JOIN adcost " + TAG('Refresh from the Oura Ring Campaign Tracker artifact');
@@ -411,6 +475,19 @@ details.method[open] > summary::before { content: '\2212'; }
       TAG('Daily $/SAL and $/Trial series refresh from the Oura Ring Campaign Tracker artifact');
   }
 
+  function salsSql(ids, trialing) {
+    var IN_TRIAL = trialing.length ? "o.DEAL_ID IN (" + trialing.join(',') + ")" : "FALSE";
+    return "WITH oura AS (SELECT DEAL_ID, DEAL_NAME, COMPANY_NAME, PRIMARY_CONTACT_ID, STAGE_NAME, OWNER_NAME, SAL_DATE, CREATE_DATE, TRIALING_DATE, IS_CLOSED_LOST, " + BUCKET_CASE +
+      " FROM ANALYTICS.GO_TO_MARKET.HUBSPOT_DEAL WHERE DEAL_ID IN (" + ids.join(',') + ")" +
+      " AND COALESCE(IS_SPAM, FALSE) = FALSE AND COALESCE(CLOSED_LOST_SUB_REASON,'') <> 'Spam/Litigator' AND SAL_DATE IS NOT NULL) " +
+      "SELECT o.bucket, o.DEAL_ID, TRIM(COALESCE(c.FIRST_NAME,'') || ' ' || COALESCE(c.LAST_NAME,'')) person, c.EMAIL, " +
+      "COALESCE(NULLIF(o.COMPANY_NAME,''), c.COMPANY_NAME) company, o.STAGE_NAME, o.OWNER_NAME, " +
+      "TO_CHAR(o.SAL_DATE,'YYYY-MM-DD') sal_date, TO_CHAR(o.CREATE_DATE,'YYYY-MM-DD') create_date, " +
+      "IFF(o.TRIALING_DATE IS NOT NULL OR " + IN_TRIAL + ",1,0) is_trialing, IFF(o.IS_CLOSED_LOST,1,0) is_lost " +
+      "FROM oura o LEFT JOIN ANALYTICS.GO_TO_MARKET.HUBSPOT_CONTACT c ON c.ID = o.PRIMARY_CONTACT_ID " +
+      "ORDER BY o.bucket, o.SAL_DATE DESC " + TAG('SAL roster drill-down from the Oura Ring Campaign Tracker artifact');
+  }
+
   // ── parsing ───────────────────────────────────────────────────────────
   function asObject(p) {
     if (typeof p === 'string') { try { return JSON.parse(p); } catch (e) { return null; } }
@@ -428,17 +505,13 @@ details.method[open] > summary::before { content: '\2212'; }
     var p = asObject(payload);
     var blocks = p && p.results ? p.results : null;
     if (!blocks) return null;
-    var out = [], sawTsv = false;
+    var out = [];
     for (var i = 0; i < blocks.length; i++) {
       var c = blocks[i] && blocks[i].content;
-      if (typeof c !== 'string') continue;
-      if (c.indexOf('Dataset TSV:') > -1) { sawTsv = true; continue; }
-      try {
-        var rec = JSON.parse(c);
-        if (rec && rec.properties) out.push(rec.properties);
-      } catch (e) { /* narrative block, skip */ }
+      if (typeof c !== 'string' || c.indexOf('Dataset TSV:') > -1) continue;
+      try { var rec = JSON.parse(c); if (rec && rec.properties) out.push(rec.properties); } catch (e) { /* narrative block */ }
     }
-    return out.length || !sawTsv ? out : [];
+    return out;
   }
   function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
   function orNull(v) { return v === null || v === undefined || v === '' ? null : num(v); }
@@ -448,14 +521,18 @@ details.method[open] > summary::before { content: '\2212'; }
   function pct(v) { return v == null || !isFinite(v) ? '—' : v.toFixed(1) + '%'; }
   function int(v) { return v == null || !isFinite(v) ? '—' : Math.round(v).toLocaleString('en-US'); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
-  function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888'; }
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888'; }
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function dayLabel(d) { var p = String(d).split('-'); return MON[num(p[1]) - 1] + ' ' + num(p[2]); }
 
   // ── state ─────────────────────────────────────────────────────────────
   var S = {
-    live: false, ringCost: 349,
+    live: false, ringCost: 349, day: null, drill: null,
     camp: SNAPSHOT.camp, bench: SNAPSHOT.bench, adCost: SNAPSHOT.adCost,
     daily: SNAPSHOT.daily, stages: SNAPSHOT.stages,
-    hsErr: null, sfErr: null, mcp: null, ids: [], sig: ''
+    sals: null, salsErr: null,
+    hsErr: null, sfErr: null, mcp: null,
+    ids: [], trialing: [], secured: [], sig: '', daySig: null
   };
   try { var sv = localStorage.getItem('oura.ringPrice'); if (sv) S.ringCost = num(sv) || 349; } catch (e) {}
 
@@ -481,6 +558,10 @@ details.method[open] > summary::before { content: '\2212'; }
     if (c === 'not_in_manifest') return [server + ' is out of scope', 'This page was not published with access to that tool.'];
     return [server + ' call failed', (err && err.message) || 'Unknown error.'];
   }
+  function errBlock(err, server, extra) {
+    var c = errCopy(err, server);
+    return '<div class="state err"><strong>' + esc(c[0]) + '</strong><span>' + esc(c[1] + (extra ? ' ' + extra : '')) + '</span><code>' + esc((err && err.code) || 'unknown') + '</code></div>';
+  }
 
   // ── derived ───────────────────────────────────────────────────────────
   function rows() {
@@ -491,12 +572,11 @@ details.method[open] > summary::before { content: '\2212'; }
     Object.keys(by).forEach(function (k) { out.push(by[k]); });
     return out;
   }
+  var SUM_KEYS = ['booked', 'outstanding', 'dropped', 'held', 'sal_of_booked', 'sal_of_held', 'trials', 'trials_of_held', 'trials_secured'];
   function totals(rs) {
-    var t = { bucket: 'Total', booked: 0, outstanding: 0, dropped: 0, held: 0, sal_of_booked: 0, sal_of_held: 0, trials: 0, trials_of_held: 0, trials_secured: 0 };
-    rs.forEach(function (r) {
-      ['booked', 'outstanding', 'dropped', 'held', 'sal_of_booked', 'sal_of_held', 'trials', 'trials_of_held', 'trials_secured']
-        .forEach(function (k) { t[k] += num(r[k]); });
-    });
+    var t = { bucket: 'Total' };
+    SUM_KEYS.forEach(function (k) { t[k] = 0; });
+    rs.forEach(function (r) { SUM_KEYS.forEach(function (k) { t[k] += num(r[k]); }); });
     return t;
   }
   // Segment carries its share of booked meetings' worth of ad spend, plus a
@@ -505,6 +585,44 @@ details.method[open] > summary::before { content: '\2212'; }
     var ad = bookedTotal ? S.adCost * (num(r.booked) / bookedTotal) : 0;
     return ad + num(r.held) * S.ringCost;
   }
+  function dayList() {
+    var days = [];
+    S.daily.forEach(function (r) { if (days.indexOf(r.d) < 0) days.push(r.d); });
+    return days.sort();
+  }
+  function bookedOn(d) { return S.daily.reduce(function (a, r) { return r.d === d ? a + num(r.booked) : a; }, 0); }
+  function salsFor(bucket) {
+    if (!S.sals) return null;
+    return S.sals.filter(function (p) {
+      return p.bucket === bucket && (!S.day || p.create_date === S.day);
+    });
+  }
+
+  // ── day picker ────────────────────────────────────────────────────────
+  function renderDaybar() {
+    var days = dayList();
+    var html = '<span class="daybar-k">Booked on</span>';
+    var allBooked = days.reduce(function (a, d) { return a + bookedOn(d); }, 0);
+    html += '<button class="day" type="button" data-day="" aria-pressed="' + (S.day ? 'false' : 'true') +
+      '">All days<span class="n">' + allBooked + '</span></button>';
+    days.forEach(function (d) {
+      html += '<button class="day" type="button" data-day="' + esc(d) + '" aria-pressed="' + (S.day === d ? 'true' : 'false') + '">' +
+        esc(dayLabel(d)) + '<span class="n">' + bookedOn(d) + '</span></button>';
+    });
+    $('daybar').innerHTML = html;
+  }
+  $('daybar').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button.day') : null;
+    if (!b) return;
+    selectDay(b.getAttribute('data-day') || null);
+  });
+  function selectDay(d) {
+    if (S.day === d) return;
+    S.day = d;
+    S.drill = null;
+    if (S.mcp) startSummary(S.mcp);
+    renderAll();
+  }
 
   // ── tiles ─────────────────────────────────────────────────────────────
   function renderTiles() {
@@ -512,9 +630,10 @@ details.method[open] > summary::before { content: '\2212'; }
     var all = S.adCost + t.held * S.ringCost;
     var perSal = t.sal_of_booked ? all / t.sal_of_booked : null;
     var perTrial = t.trials ? all / t.trials : null;
+    var scope = S.day ? 'on ' + dayLabel(S.day) : 'campaign to date';
     var tiles = [
       ['Campaign cost', money(all), money(S.adCost) + ' ads &middot; ' + money(t.held * S.ringCost) + ' rings'],
-      ['Demos booked', int(t.booked), int(t.outstanding) + ' still to come'],
+      ['Demos booked', int(t.booked), esc(scope)],
       ['Demos held', int(t.held), pct(t.booked ? 100 * t.held / t.booked : NaN) + ' of booked'],
       ['SALs', int(t.sal_of_booked), pct(t.held ? 100 * t.sal_of_held / t.held : NaN) + ' of held'],
       ['$ / SAL', money(perSal), '<b>' + int(t.trials) + '</b> in trial &middot; ' + money(perTrial) + '/trial'],
@@ -526,17 +645,13 @@ details.method[open] > summary::before { content: '\2212'; }
   }
 
   // ── the main table ────────────────────────────────────────────────────
-  function delta(actual, mark, higherIsBetter) {
-    if (!isFinite(actual) || mark == null) return '';
+  // No delta annotations: the campaign figure simply turns green when it beats
+  // the benchmark sitting next to it and red when it trails.
+  function cmp(actual, mark, higherIsBetter) {
+    if (actual == null || !isFinite(actual) || mark == null) return '';
     var d = actual - mark;
     if (Math.abs(d) < 0.05) return '';
-    var good = higherIsBetter ? d > 0 : d < 0;
-    return '<span class="delta ' + (good ? 'up' : 'down') + '">' + (d > 0 ? '+' : '−') + Math.abs(d).toFixed(1) + 'pp</span>';
-  }
-  function deltaMoney(actual, mark) {
-    if (actual == null || mark == null) return '';
-    var d = actual - mark;
-    return '<span class="delta ' + (d < 0 ? 'up' : 'down') + '">' + (d > 0 ? '+' : '−') + money(Math.abs(d)) + '</span>';
+    return (higherIsBetter ? d > 0 : d < 0) ? ' beat' : ' miss';
   }
 
   function renderTable() {
@@ -553,47 +668,109 @@ details.method[open] > summary::before { content: '\2212'; }
 
     function line(r, isTotal) {
       var b = isTotal ? null : S.bench[r.bucket];
-      var salBooked = r.booked ? 100 * r.sal_of_booked / r.booked : NaN;
-      var salHeld = r.held ? 100 * r.sal_of_held / r.held : NaN;
-      var trialHeld = r.held ? 100 * r.trials_of_held / r.held : NaN;
+      var salBooked = r.booked ? 100 * r.sal_of_booked / r.booked : null;
+      var salHeld = r.held ? 100 * r.sal_of_held / r.held : null;
+      var trialHeld = r.held ? 100 * r.trials_of_held / r.held : null;
       var c = isTotal ? S.adCost + r.held * S.ringCost : cost(r, t.booked);
       var perSal = r.sal_of_booked ? c / r.sal_of_booked : null;
       var perTrial = r.trials ? c / r.trials : null;
-      var key = isTotal ? '' : '<span class="seg-key" style="background:var(' + SEG_VAR[r.bucket] + ')"></span>';
       var bSalBooked = b ? b.sal_booked : null, bSalHeld = b ? b.sal_held : null;
       var bCostSal = b ? b.cost_sal : null, bTrialHeld = b ? b.trial_held : null, bCostTrial = b ? b.cost_trial : null;
+      var key = isTotal ? '' : '<span class="seg-key" style="background:var(' + SEG_VAR[r.bucket] + ')"></span>';
+
+      var salCell;
+      if (isTotal || !r.sal_of_booked) {
+        salCell = int(r.sal_of_booked);
+      } else {
+        var open = S.drill === r.bucket;
+        salCell = '<button class="drill" type="button" data-bucket="' + esc(r.bucket) + '" aria-expanded="' + (open ? 'true' : 'false') +
+          '" title="See the ' + r.sal_of_booked + ' people behind these SALs">' + int(r.sal_of_booked) + '</button>';
+      }
 
       return '<tr' + (isTotal ? ' class="total"' : '') + '>' +
-        '<td class="seg">' + key + esc(r.bucket) + '</td>' +
+        '<td class="seg"><span class="seg-inner">' + key + esc(r.bucket) + '</span></td>' +
         '<td>' + int(r.booked) + '</td><td>' + int(r.outstanding) + '</td><td>' + int(r.dropped) + '</td>' +
-        '<td>' + int(r.held) + '</td><td>' + int(r.sal_of_booked) + '</td>' +
-        '<td class="metric colgroup">' + pct(salBooked) + delta(salBooked, bSalBooked, true) + '</td>' +
+        '<td>' + int(r.held) + '</td><td>' + salCell + '</td>' +
+        '<td class="metric colgroup' + cmp(salBooked, bSalBooked, true) + '">' + pct(salBooked) + '</td>' +
         '<td class="bench">' + pct(bSalBooked) + '</td>' +
-        '<td class="metric colgroup">' + pct(salHeld) + delta(salHeld, bSalHeld, true) + '</td>' +
+        '<td class="metric colgroup' + cmp(salHeld, bSalHeld, true) + '">' + pct(salHeld) + '</td>' +
         '<td class="bench">' + pct(bSalHeld) + '</td>' +
-        '<td class="money colgroup">' + money(perSal) + deltaMoney(perSal, bCostSal) + '</td>' +
+        '<td class="money colgroup' + cmp(perSal, bCostSal, false) + '">' + money(perSal) + '</td>' +
         '<td class="bench">' + money(bCostSal) + '</td>' +
         '<td class="colgroup">' + int(r.trials_secured) + '</td><td>' + int(r.trials) + '</td>' +
-        '<td class="metric colgroup">' + pct(trialHeld) + delta(trialHeld, bTrialHeld, true) + '</td>' +
+        '<td class="metric colgroup' + cmp(trialHeld, bTrialHeld, true) + '">' + pct(trialHeld) + '</td>' +
         '<td class="bench">' + pct(bTrialHeld) + '</td>' +
-        '<td class="money colgroup">' + money(perTrial) + deltaMoney(perTrial, bCostTrial) + '</td>' +
+        '<td class="money colgroup' + cmp(perTrial, bCostTrial, false) + '">' + money(perTrial) + '</td>' +
         '<td class="bench">' + money(bCostTrial) + '</td>' +
         '</tr>';
     }
 
-    $('tablewrap').innerHTML = '<table>' + head + '<tbody>' + rs.map(function (r) { return line(r, false); }).join('') + line(t, true) + '</tbody></table>';
+    $('tablewrap').innerHTML = '<table>' + head + '<tbody>' +
+      rs.map(function (r) { return line(r, false); }).join('') + line(t, true) + '</tbody></table>';
 
-    var note = '<p class="panel-note" style="padding:11px 17px 0">Conversion of <b>booked</b> is held down while ' + int(t.outstanding) + ' demos are still ahead on the calendar; the benchmark cohorts have all finished running. Conversion of <b>held</b> is the fair read today.</p>';
-    if (S.sfErr) { var e = errCopy(S.sfErr, 'Snowflake'); note = '<div class="state err"><strong>' + esc(e[0]) + '</strong><span>' + esc(e[1]) + ' Showing the last snapshot.</span><code>' + esc(S.sfErr.code) + '</code></div>'; }
-    else if (!S.live) note = '<p class="snapnote">Snapshot from ' + esc(new Date(SNAPSHOT.at).toLocaleString()) + ' · waiting on live results…</p>';
-    $('tablenote').innerHTML = note;
+    var notes = '<p class="readnote">Campaign figures read <span class="g">green</span> when they beat the team average beside them and <span class="r">red</span> when they trail it. ' +
+      (S.day
+        ? 'Showing only the ' + int(t.booked) + ' demos booked on <b>' + esc(dayLabel(S.day)) + '</b>, against that day\'s Facebook spend.'
+        : 'Conversion of <b>booked</b> is held down while ' + int(t.outstanding) + ' demos are still ahead on the calendar, and the benchmark cohorts have all finished running; conversion of <b>held</b> is the fair read today.') +
+      '</p>';
+    if (S.sfErr) notes += errBlock(S.sfErr, 'Snowflake', 'Showing the last good figures.');
+    else if (!S.live) notes += '<p class="snapnote">Snapshot from ' + esc(new Date(SNAPSHOT.at).toLocaleString()) + ' · waiting on live results…</p>';
+    $('tablenote').innerHTML = notes;
+
+    renderPeople();
+  }
+
+  $('tablewrap').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button.drill') : null;
+    if (!b) return;
+    var bucket = b.getAttribute('data-bucket');
+    S.drill = S.drill === bucket ? null : bucket;
+    renderTable();
+    if (S.drill) { var p = $('people'); if (p.firstChild) p.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  });
+
+  // ── SAL roster ────────────────────────────────────────────────────────
+  function stagePill(p) {
+    if (num(p.is_trialing)) return '<span class="pill trialing">Trialing</span>';
+    if (num(p.is_lost)) return '<span class="pill lost">Closed lost</span>';
+    if (p.stage === 'Trial Secured') return '<span class="pill secured">Trial secured</span>';
+    return '<span class="pill open">' + esc(p.stage || 'Open') + '</span>';
+  }
+
+  function renderPeople() {
+    var el = $('people');
+    if (!S.drill) { el.innerHTML = ''; return; }
+    var bucket = S.drill;
+    var head = '<div class="people-head"><h3 class="people-title"><span class="seg-key" style="background:var(' + SEG_VAR[bucket] + ')"></span>' +
+      esc(bucket) + ' SALs' + (S.day ? ' booked ' + esc(dayLabel(S.day)) : '') + '</h3>' +
+      '<button class="ghost" type="button" id="closePeople">Close</button></div>';
+
+    var body;
+    if (S.salsErr) body = errBlock(S.salsErr, 'Snowflake');
+    else if (!S.sals) body = '<div class="state skeleton">' + (S.mcp ? 'Loading the roster…' : 'Connect HubSpot and Snowflake on claude.ai to see who these people are — the roster is fetched live with your own credentials, never stored in the page.') + '</div>';
+    else {
+      var list = salsFor(bucket);
+      if (!list.length) body = '<div class="state">No SALs in this segment for the selected day.</div>';
+      else body = '<div class="people-list">' + list.map(function (p) {
+        var name = p.person && p.person.trim() ? p.person : (p.email || 'Unnamed contact');
+        return '<div class="person">' +
+          '<div class="person-top"><span class="person-name">' + esc(name) + '</span>' + stagePill(p) + '</div>' +
+          '<span class="person-co">' + esc(p.company || '—') + '</span>' +
+          '<span class="person-meta">' + esc(p.owner || 'Unowned') + ' · SAL ' + esc(dayLabel(p.sal_date)) + ' · ' +
+          '<a href="https://app.hubspot.com/contacts/' + PORTAL + '/record/0-3/' + esc(p.deal_id) + '" target="_blank" rel="noopener">open deal</a></span>' +
+          '</div>';
+      }).join('') + '</div>';
+    }
+    el.innerHTML = '<div class="people">' + head + body + '</div>';
+    var close = $('closePeople');
+    if (close) close.addEventListener('click', function () { S.drill = null; renderTable(); });
   }
 
   // ── state mix ─────────────────────────────────────────────────────────
   function renderMix() {
     var rs = rows();
-    var all = rs.concat([totals(rs)]);
-    $('mix').innerHTML = all.map(function (r) {
+    $('mixnote').textContent = S.day ? 'Held, still on the calendar, or gone — demos booked ' + dayLabel(S.day) + '.' : 'Held, still on the calendar, or gone.';
+    $('mix').innerHTML = rs.concat([totals(rs)]).map(function (r) {
       if (!num(r.booked)) return '';
       var parts = [['held', num(r.held)], ['pending', num(r.outstanding)], ['lost', num(r.dropped)]];
       var bar = parts.map(function (p) {
@@ -607,60 +784,20 @@ details.method[open] > summary::before { content: '\2212'; }
   }
 
   // ── charts: two small multiples over one shared day axis ──────────────
-  function dayList() {
-    var days = [];
-    S.daily.forEach(function (r) { if (days.indexOf(r.d) < 0) days.push(r.d); });
-    return days.sort();
-  }
-  function label(d) {
-    var p = String(d).split('-');
-    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][num(p[1]) - 1] + ' ' + num(p[2]);
-  }
-
-  function spendChart(days) {
-    var W = 620, H = 150, PL = 8, PR = 8, PT = 22, PB = 26;
+  function chartFrame(days, draw, aria) {
+    var W = 620, H = 168, PL = 8, PR = 8, PT = 22, PB = 26;
     var iw = W - PL - PR, ih = H - PT - PB;
-    var vals = days.map(function (d) {
-      return S.daily.reduce(function (a, r) { return r.d === d ? a + num(r.ad) : a; }, 0);
-    });
-    var max = Math.max.apply(null, vals.concat([1]));
     var slot = iw / Math.max(days.length, 1), bw = Math.min(slot - 12, 66);
-    var col = cssVar('--spend');
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Facebook spend on Oura creatives per day">';
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(aria) + '">';
     s += '<line class="grid-line" x1="' + PL + '" y1="' + (PT + ih) + '" x2="' + (W - PR) + '" y2="' + (PT + ih) + '"/>';
     days.forEach(function (d, i) {
-      var v = vals[i], h = (v / max) * ih, x = PL + slot * i + (slot - bw) / 2, y = PT + ih - h;
-      if (v > 0) s += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(h, 2).toFixed(1) + '" rx="4" fill="' + col + '"><title>' + esc(label(d) + ' · ' + money(v)) + '</title></rect>';
-      s += '<text class="bar-label" x="' + (x + bw / 2).toFixed(1) + '" y="' + (v > 0 ? y - 6 : PT + ih - 6).toFixed(1) + '" text-anchor="middle">' + esc(money(v)) + '</text>';
-      s += '<text class="axis-text" x="' + (x + bw / 2).toFixed(1) + '" y="' + (PT + ih + 16) + '" text-anchor="middle">' + esc(label(d)) + '</text>';
-    });
-    return s + '</svg>';
-  }
-
-  function bookedChart(days) {
-    var W = 620, H = 172, PL = 8, PR = 8, PT = 22, PB = 26;
-    var iw = W - PL - PR, ih = H - PT - PB;
-    var byDay = {};
-    days.forEach(function (d) { byDay[d] = {}; });
-    S.daily.forEach(function (r) { if (byDay[r.d]) byDay[r.d][r.bucket] = num(r.booked); });
-    var tot = days.map(function (d) { return SEG_ORDER.reduce(function (a, s) { return a + (byDay[d][s] || 0); }, 0); });
-    var max = Math.max.apply(null, tot.concat([1]));
-    var slot = iw / Math.max(days.length, 1), bw = Math.min(slot - 12, 66);
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Demos booked per day, stacked by segment">';
-    s += '<line class="grid-line" x1="' + PL + '" y1="' + (PT + ih) + '" x2="' + (W - PR) + '" y2="' + (PT + ih) + '"/>';
-    days.forEach(function (d, i) {
-      var x = PL + slot * i + (slot - bw) / 2, yCursor = PT + ih;
-      SEG_ORDER.forEach(function (seg) {
-        var v = byDay[d][seg] || 0;
-        if (!v) return;
-        var h = (v / max) * ih;
-        yCursor -= h;
-        s += '<rect x="' + x.toFixed(1) + '" y="' + yCursor.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(h - 2, 1).toFixed(1) + '" rx="2" fill="' + cssVar(SEG_VAR[seg]) + '">' +
-          '<title>' + esc(label(d) + ' · ' + seg + ' · ' + v + ' booked') + '</title></rect>';
-        if (h > 15) s += '<text class="stack-label" x="' + (x + bw / 2).toFixed(1) + '" y="' + (yCursor + h / 2 + 2).toFixed(1) + '" text-anchor="middle">' + v + '</text>';
-      });
-      if (tot[i] > 0) s += '<text class="bar-label" x="' + (x + bw / 2).toFixed(1) + '" y="' + (PT + ih - (tot[i] / max) * ih - 6).toFixed(1) + '" text-anchor="middle">' + tot[i] + '</text>';
-      s += '<text class="axis-text" x="' + (x + bw / 2).toFixed(1) + '" y="' + (PT + ih + 16) + '" text-anchor="middle">' + esc(label(d)) + '</text>';
+      var x = PL + slot * i + (slot - bw) / 2;
+      s += draw(d, i, x, bw, PT, ih);
+      s += '<text class="axis-text' + (S.day === d ? ' sel' : '') + '" x="' + (x + bw / 2).toFixed(1) + '" y="' + (PT + ih + 16) + '" text-anchor="middle">' + esc(dayLabel(d)) + '</text>';
+      if (S.day === d) s += '<rect class="selbox" x="' + (x - 5).toFixed(1) + '" y="' + (PT - 12) + '" width="' + (bw + 10).toFixed(1) + '" height="' + (ih + 16) + '" rx="6"/>';
+      s += '<rect class="hit" x="' + (PL + slot * i).toFixed(1) + '" y="' + (PT - 14) + '" width="' + slot.toFixed(1) + '" height="' + (ih + 40) +
+        '" data-day="' + esc(d) + '" tabindex="0" role="button" aria-label="' + esc('Filter the table to ' + dayLabel(d)) + '">' +
+        '<title>' + esc(dayLabel(d) + ' — click to filter the table') + '</title></rect>';
     });
     return s + '</svg>';
   }
@@ -668,51 +805,96 @@ details.method[open] > summary::before { content: '\2212'; }
   function renderCharts() {
     var days = dayList();
     if (!days.length) { $('charts').innerHTML = '<div class="state">No spend or bookings have landed yet.</div>'; return; }
+
+    var spendCol = cssVar('--spend'), dimCol = cssVar('--spend-dim');
+    var spendVals = days.map(function (d) { return S.daily.reduce(function (a, r) { return r.d === d ? a + num(r.ad) : a; }, 0); });
+    var spendMax = Math.max.apply(null, spendVals.concat([1]));
+    var spendSvg = chartFrame(days, function (d, i, x, bw, PT, ih) {
+      var v = spendVals[i], h = (v / spendMax) * ih, y = PT + ih - h;
+      var fill = (!S.day || S.day === d) ? spendCol : dimCol;
+      var out = '';
+      if (v > 0) out += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(h, 2).toFixed(1) + '" rx="4" fill="' + fill + '"/>';
+      out += '<text class="bar-label" x="' + (x + bw / 2).toFixed(1) + '" y="' + (v > 0 ? y - 6 : PT + ih - 6).toFixed(1) + '" text-anchor="middle">' + esc(money(v)) + '</text>';
+      return out;
+    }, 'Facebook spend on Oura creatives per day');
+
+    var byDay = {};
+    days.forEach(function (d) { byDay[d] = {}; });
+    S.daily.forEach(function (r) { if (byDay[r.d]) byDay[r.d][r.bucket] = num(r.booked); });
+    var tots = days.map(function (d) { return SEG_ORDER.reduce(function (a, s) { return a + (byDay[d][s] || 0); }, 0); });
+    var bookMax = Math.max.apply(null, tots.concat([1]));
+    var bookSvg = chartFrame(days, function (d, i, x, bw, PT, ih) {
+      var yCursor = PT + ih, out = '', dim = S.day && S.day !== d;
+      SEG_ORDER.forEach(function (seg) {
+        var v = byDay[d][seg] || 0;
+        if (!v) return;
+        var h = (v / bookMax) * ih;
+        yCursor -= h;
+        out += '<rect x="' + x.toFixed(1) + '" y="' + yCursor.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(h - 2, 1).toFixed(1) +
+          '" rx="2" fill="' + cssVar(SEG_VAR[seg]) + '"' + (dim ? ' opacity="0.28"' : '') + '/>';
+        if (h > 15 && !dim) out += '<text class="stack-label" x="' + (x + bw / 2).toFixed(1) + '" y="' + (yCursor + h / 2 + 3.5).toFixed(1) + '" text-anchor="middle">' + v + '</text>';
+      });
+      if (tots[i] > 0) out += '<text class="bar-label" x="' + (x + bw / 2).toFixed(1) + '" y="' + (PT + ih - (tots[i] / bookMax) * ih - 6).toFixed(1) + '" text-anchor="middle">' + tots[i] + '</text>';
+      return out;
+    }, 'Demos booked per day, stacked by segment');
+
     var legend = '<ul class="legend">' + SEG_ORDER.map(function (s) {
       return '<li><span class="swatch" style="background:var(' + SEG_VAR[s] + ')"></span>' + esc(s) + '</li>';
     }).join('') + '</ul>';
+
     $('charts').innerHTML =
-      '<div><p class="chart-cap">Facebook spend on Oura creatives</p>' + spendChart(days) + '</div>' +
-      '<div><p class="chart-cap">Demos booked, by segment</p>' + legend + bookedChart(days) + '</div>';
+      '<div><p class="chart-cap">Facebook spend on Oura creatives</p>' + spendSvg + '</div>' +
+      '<div><p class="chart-cap">Demos booked, by segment</p>' + legend + bookSvg + '</div>';
   }
+
+  $('charts').addEventListener('click', function (e) {
+    var d = e.target && e.target.getAttribute ? e.target.getAttribute('data-day') : null;
+    if (d) selectDay(S.day === d ? null : d);
+  });
+  $('charts').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var d = e.target && e.target.getAttribute ? e.target.getAttribute('data-day') : null;
+    if (d) { e.preventDefault(); selectDay(S.day === d ? null : d); }
+  });
 
   // ── HubSpot pulse ─────────────────────────────────────────────────────
   function renderPulse() {
-    if (S.hsErr) {
-      var e = errCopy(S.hsErr, 'HubSpot');
-      $('pulse').innerHTML = '<div class="state err"><strong>' + esc(e[0]) + '</strong><span>' + esc(e[1]) + '</span><code>' + esc(S.hsErr.code) + '</code></div>';
-      return;
-    }
+    if (S.hsErr) { $('pulse').innerHTML = errBlock(S.hsErr, 'HubSpot'); return; }
     var order = ['Opportunity Identified', 'Evaluation', 'Trial Secured', 'Trialing', 'Closed won', 'Closed lost'];
     var keys = order.filter(function (k) { return S.stages[k] != null; })
       .concat(Object.keys(S.stages).filter(function (k) { return order.indexOf(k) < 0; }));
     var total = keys.reduce(function (a, k) { return a + S.stages[k]; }, 0);
-    var warehouse = totals(rows()).booked;
-    var lead = total - warehouse;
     var html = keys.map(function (k) {
       return '<div class="pulse-row"><span class="pulse-k">' + esc(k) + '</span><span class="pulse-v">' + int(S.stages[k]) + '</span></div>';
     }).join('');
     html += '<div class="pulse-row" style="background:var(--surface-2)"><span class="pulse-k"><b>On the promo list</b></span><span class="pulse-v">' + int(total) + '</span></div>';
-    var note = lead > 0
-      ? '<p class="panel-note">HubSpot is <b>' + int(lead) + '</b> ahead of the warehouse table above, which is the sync lag the Trials bridge is there to cover.'
-      : '<p class="panel-note">The warehouse has caught up to HubSpot.';
-    $('pulse').innerHTML = '<div class="pulse">' + html + '</div>' + note + '</p>';
+    var note;
+    if (S.day) {
+      note = '<p class="panel-note">This panel is always the whole promo list; the day filter applies to the table and the charts.</p>';
+    } else {
+      var lead = total - totals(rows()).booked;
+      note = lead > 0
+        ? '<p class="panel-note">HubSpot is <b>' + int(lead) + '</b> ahead of the warehouse table above, which is the sync lag the Trials bridge is there to cover.</p>'
+        : '<p class="panel-note">The warehouse has caught up to HubSpot.</p>';
+    }
+    $('pulse').innerHTML = '<div class="pulse">' + html + '</div>' + note;
   }
 
-  function renderAll() { renderTiles(); renderTable(); renderMix(); renderCharts(); renderPulse(); }
+  function renderAll() { renderDaybar(); renderTiles(); renderTable(); renderMix(); renderCharts(); renderPulse(); }
   renderAll();
 
   // ── status rail ───────────────────────────────────────────────────────
   function chip(dotId, textId, cls, text) { $(dotId).className = 'dot' + (cls ? ' ' + cls : ''); $(textId).textContent = text; }
   function tickClock() {
     var hhmm = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    chip('d-clock', 's-clock', S.mcp === false ? 'down' : (S.live ? 'live' : 'warn'), (S.mcp === false ? 'Snapshot' : (S.live ? 'Live' : 'Loading')) + ' · ' + hhmm);
+    chip('d-clock', 's-clock', S.mcp === false ? 'down' : (S.live ? 'live' : 'warn'),
+      (S.mcp === false ? 'Snapshot' : (S.live ? 'Live' : 'Loading')) + ' · ' + hhmm);
   }
   setInterval(tickClock, 20000);
   tickClock();
 
   // ── wire up ───────────────────────────────────────────────────────────
-  var sfUnsubs = [];
+  var unsubSummary = null, unsubRest = [];
 
   function applySummary(rs) {
     var camp = [], bench = {}, ad = 0;
@@ -730,8 +912,10 @@ details.method[open] > summary::before { content: '\2212'; }
       }
       ad = num(r.C);
     });
-    if (!camp.length) return false;
-    S.camp = camp; S.bench = bench; S.adCost = ad; S.live = true;
+    S.camp = camp;
+    if (Object.keys(bench).length) S.bench = bench;
+    S.adCost = ad;
+    S.live = true;
     return true;
   }
   function applyDaily(rs) {
@@ -740,26 +924,45 @@ details.method[open] > summary::before { content: '\2212'; }
     });
     return true;
   }
+  function applySals(rs) {
+    S.sals = rs.map(function (r) {
+      return {
+        bucket: r.BUCKET, deal_id: r.DEAL_ID, person: r.PERSON, email: r.EMAIL, company: r.COMPANY,
+        stage: r.STAGE_NAME, owner: r.OWNER_NAME, sal_date: r.SAL_DATE, create_date: r.CREATE_DATE,
+        is_trialing: num(r.IS_TRIALING), is_lost: num(r.IS_LOST)
+      };
+    });
+    return true;
+  }
 
-  function sfHandler(apply) {
+  function sfHandler(apply, errKey) {
     return function (ev) {
       if (ev.type === 'error') {
-        S.sfErr = ev.error;
+        S[errKey] = ev.error;
         chip('d-sf', 's-sf', ev.error.code === 'server_unavailable' ? 'warn' : 'down', 'Snowflake');
         renderAll(); tickClock(); return;
       }
       var rs = sfRows(ev.result && ev.result.payload);
-      if (!rs) S.sfErr = { code: 'tool_error', message: 'Snowflake answered in a shape this page could not read.' };
-      else if (apply(rs)) { S.sfErr = null; chip('d-sf', 's-sf', 'live', 'Snowflake'); }
+      if (!rs) S[errKey] = { code: 'tool_error', message: 'Snowflake answered in a shape this page could not read.' };
+      else if (apply(rs)) { S[errKey] = null; chip('d-sf', 's-sf', 'live', 'Snowflake'); }
       renderAll(); tickClock();
     };
   }
 
-  function startSnowflake(mcp, ids, trialing, secured) {
-    sfUnsubs.forEach(function (u) { try { u(); } catch (e) {} });
-    sfUnsubs = [];
-    sfUnsubs.push(mcp.watchTool(SF, 'sql_exec', { sql: summarySql(ids, trialing, secured) }, sfHandler(applySummary), { refetchInterval: 60000, cache: { staleTime: 45000 } }));
-    sfUnsubs.push(mcp.watchTool(SF, 'sql_exec', { sql: dailySql(ids, trialing) }, sfHandler(applyDaily), { refetchInterval: 180000, cache: { staleTime: 150000 } }));
+  function startSummary(mcp) {
+    var key = S.sig + '|' + (S.day || 'all');
+    if (key === S.daySig) return;
+    S.daySig = key;
+    if (unsubSummary) { try { unsubSummary(); } catch (e) {} }
+    unsubSummary = mcp.watchTool(SF, 'sql_exec', { sql: summarySql(S.ids, S.trialing, S.secured, S.day) },
+      sfHandler(applySummary, 'sfErr'), { refetchInterval: 60000, cache: { staleTime: 45000 } });
+  }
+  function startRest(mcp) {
+    unsubRest.forEach(function (u) { try { u(); } catch (e) {} });
+    unsubRest = [
+      mcp.watchTool(SF, 'sql_exec', { sql: dailySql(S.ids, S.trialing) }, sfHandler(applyDaily, 'sfErr'), { refetchInterval: 180000, cache: { staleTime: 150000 } }),
+      mcp.watchTool(SF, 'sql_exec', { sql: salsSql(S.ids, S.trialing) }, sfHandler(applySals, 'salsErr'), { refetchInterval: 120000, cache: { staleTime: 90000 } })
+    ];
   }
 
   function offline(copy) {
@@ -776,6 +979,7 @@ details.method[open] > summary::before { content: '\2212'; }
     offline(['Connectors are not available in this view', 'Open this page on claude.ai with the HubSpot and Snowflake connectors enabled and it fills itself in.']);
     return;
   }
+
   bridge.then(function (mcp) {
     if (!mcp) {
       offline(['Connectors are not available in this view', 'Open this page on claude.ai with the HubSpot and Snowflake connectors enabled and it fills itself in.']);
@@ -811,10 +1015,13 @@ details.method[open] > summary::before { content: '\2212'; }
         stages[name] = (stages[name] || 0) + 1;
       });
       S.stages = stages;
-      S.ids = ids;
 
       var sig = ids.slice().sort().join(',') + '|' + trialing.slice().sort().join(',') + '|' + secured.slice().sort().join(',');
-      if (sig !== S.sig) { S.sig = sig; startSnowflake(mcp, ids, trialing, secured); }
+      if (sig !== S.sig) {
+        S.sig = sig; S.ids = ids; S.trialing = trialing; S.secured = secured;
+        startSummary(mcp);
+        startRest(mcp);
+      }
       renderAll(); tickClock();
     }, { refetchInterval: 60000, cache: { staleTime: 45000 } });
 
