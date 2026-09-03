@@ -15,9 +15,10 @@ HubSpot and Snowflake connectors. On load it:
 
 1. Pulls live membership and stage for HubSpot list `15738`
    ("Oura Ring Promo - Demos/Deals") via `query_crm_data`.
-2. Feeds those deal IDs into three Snowflake `sql_exec` queries — the segment
+2. Feeds those deal IDs into four Snowflake `sql_exec` queries — the segment
    summary (with the Jan 2025–May 2026 team benchmarks and Facebook ad spend on
-   Oura creatives), the daily cohort series, and the SAL roster.
+   Oura creatives), the daily cohort series, the SAL roster, and the
+   organizations roster.
 3. Computes every ratio and dollar figure in the page from those results plus
    the editable ring price.
 
@@ -31,8 +32,19 @@ owner, stage and a link to the deal. The roster is fetched live per viewer
 through their own connector and is deliberately absent from `SNAPSHOT`, so no
 contact data is baked into the published page.
 
-HubSpot and the summary query refresh every 60s; the SAL roster every 120s;
-the daily series every 180s.
+The Organizations panel, low on the page, runs off the promo **form fills**
+rather than the demo list, so an account appears at Contact before it books
+anything — which is how Stripe shows up while it still has no demo. Each row
+is ranked on the signals HubSpot already carries (ICP tier, target account,
+existing ARR, headcount) and tracked Contact → Booked → Held → Trial → Won.
+Its tabs sort best / newest / oldest / furthest along, and the funnel table's
+day chips also narrow it, on the day the account came in.
+
+Like the SAL roster, it is fetched live per viewer and kept out of `SNAPSHOT`,
+so no account or contact data is baked into the published page.
+
+HubSpot and the summary query refresh every 60s; the SAL and organization
+rosters every 120s; the daily series every 180s.
 The warehouse itself pulls from HubSpot and the ad platforms about hourly.
 
 `SNAPSHOT` near the top of the script is the embedded fallback, rendered

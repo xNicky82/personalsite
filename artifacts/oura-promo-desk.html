@@ -218,6 +218,45 @@ details.method[open] > summary::before { content: '\2212'; }
 .def p { margin: 0 0 8px; }
 .def b { color: var(--ink); font-weight: 600; }
 
+/* ── organizations tab ── */
+.tabstrip { display: flex; flex-wrap: wrap; gap: 4px; padding: 11px 17px; border-bottom: 1px solid var(--rule); background: var(--surface-2); }
+button.tab {
+  font-family: 'Public Sans', sans-serif; font-size: 12.5px; font-weight: 500; color: var(--ink-3);
+  background: none; border: 1px solid transparent; border-radius: 7px; padding: 5px 11px; cursor: pointer;
+}
+button.tab:hover { color: var(--ink); }
+button.tab[aria-selected="true"] { color: var(--ink); background: var(--surface); border-color: var(--rule-strong); font-weight: 600; }
+button.tab .n { font-family: 'IBM Plex Mono', monospace; opacity: .55; margin-left: 6px; font-size: 11px; }
+
+.orgtable { border-collapse: collapse; width: 100%; min-width: 1080px; }
+.orgtable th, .orgtable td { padding: 11px 10px; text-align: left; vertical-align: middle; }
+.orgtable th:first-child, .orgtable td:first-child { padding-left: 17px; }
+.orgtable th:last-child, .orgtable td:last-child { padding-right: 44px; }
+.orgtable thead th { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--rule-strong); padding-bottom: 9px; white-space: nowrap; }
+.orgtable tbody td { border-bottom: 1px solid var(--rule); font-size: 13px; }
+.orgtable tbody tr.flagged td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.orgtable tbody tr.tier1 td { background: var(--accent-soft); }
+.org-name { font-weight: 600; font-size: 13.5px; display: block; }
+.org-dom { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-3); }
+.org-flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.flag { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: .05em; text-transform: uppercase; padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
+.flag.t1 { background: var(--accent); color: #fff; }
+.flag.t2 { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+.flag.target { background: var(--pending-soft); color: var(--ink-2); border: 1px solid var(--rule-strong); }
+.flag.customer { background: var(--held-soft); color: var(--good); }
+.org-num { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; font-size: 12.5px; white-space: nowrap; }
+.org-sub { font-size: 11px; color: var(--ink-3); }
+
+.track { display: grid; grid-template-columns: repeat(5, minmax(52px, 1fr)); gap: 3px; min-width: 300px; }
+.step { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.step-bar { height: 4px; border-radius: 2px; background: var(--rule); }
+.step.on .step-bar { background: var(--held); }
+.step.won .step-bar { background: var(--accent); }
+.step.dead .step-bar { background: var(--lost); }
+.step-k { font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step-v { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.step:not(.on) .step-v { color: var(--ink-3); opacity: .5; }
+
 .two { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; align-items: start; }
 @media (max-width: 940px) { .two { grid-template-columns: 1fr; } .mix-row { grid-template-columns: 96px 1fr; } }
 </style>
@@ -297,6 +336,18 @@ details.method[open] > summary::before { content: '\2212'; }
     </div>
   </div>
 
+  <section class="panel" id="orgpanel">
+    <div class="panel-head">
+      <div>
+        <h2 class="panel-title">Organizations</h2>
+        <p class="panel-note">Every company that came in through the promo page, ranked by how much we want them, and tracked from first contact to closed won. Built on form fills rather than demos, so an account shows up the moment it arrives — before anyone books anything.</p>
+      </div>
+    </div>
+    <div class="tabstrip" id="orgtabs" role="tablist" aria-label="Sort the organizations"></div>
+    <div class="tableedge"><div class="tablescroll" id="orgwrap"></div></div>
+    <div id="orgnote"></div>
+  </section>
+
   <details class="method">
     <summary>How every number on this page is built</summary>
     <div class="method-body">
@@ -329,6 +380,10 @@ details.method[open] > summary::before { content: '\2212'; }
         <p>Mature cohorts only, Jan 2025 to May 2026. Conversion of booked is SALs over leads; conversion of held is measured among leads that actually held a meeting. Paid $/SAL and $/Trial use attributed paid-media cost shares over paid-attributed outcomes, so it is paid media, not blended CAC.</p>
       </div>
       <div class="def">
+        <h4>The Organizations tab</h4>
+        <p>Ranked on the signals HubSpot already carries: <b>ICP tier 1 or 2</b> first, then target accounts, then existing customers by ARR, then headcount. Its cohort is everyone who filled the promo form, so an account appears at <b>Contact</b> before it ever books. Sort by newest to read it as an arrivals board; the day chips on the funnel table also narrow it, on the day the account came in.</p>
+      </div>
+      <div class="def">
         <h4>Freshness</h4>
         <p>HubSpot and Snowflake are both re-queried every 60 seconds. The warehouse itself pulls from HubSpot and the ad platforms about hourly, so the live pulse panel leads and the table settles behind it. Deals flagged spam or closed lost for <b>Spam/Litigator</b> are dropped throughout, which matters on a giveaway.</p>
       </div>
@@ -343,6 +398,7 @@ details.method[open] > summary::before { content: '\2212'; }
 
   var SF = 'Snowflake', HS = 'HubSpot';
   var LIST_ID = '15738';
+  var PROMO_PAGE = '/promo-oura-ring';
   var PORTAL = '20853254';
   var STAGE = { '196326666': 'Opportunity Identified', '35148648': 'Opportunity Identified', '196326667': 'Evaluation', '936925777': 'Trial Secured', '196326668': 'Trialing', '196326672': 'Closed lost', '196326671': 'Closed won' };
   var TRIALING_STAGE = '196326668', SECURED_STAGE = '936925777';
@@ -488,6 +544,43 @@ details.method[open] > summary::before { content: '\2212'; }
       "ORDER BY o.bucket, o.SAL_DATE DESC " + TAG('SAL roster drill-down from the Oura Ring Campaign Tracker artifact');
   }
 
+  // Organizations run off the FORM FILLS, not the demo list, so an account
+  // lands here the moment it arrives — before anyone books a demo. The deal
+  // lifecycle is left-joined on, and is simply absent until there is one.
+  function orgsSql(ids) {
+    var dealSet = ids.length ? ids.join(',') : '0';
+    return "WITH promo AS (SELECT CONTACT_ID, MIN(FORM_SUBMISSION_TIMESTAMP) came_in, ANY_VALUE(COMPANY_SEGMENT) form_segment " +
+      "FROM ANALYTICS.GO_TO_MARKET.WEBSITE_FORM_SUBMISSION_TO_CALENDLY_BOOKING_TO_HUBSPOT_DEAL " +
+      "WHERE PAGE_PATH='" + PROMO_PAGE + "' AND CONTACT_ID IS NOT NULL GROUP BY 1), " +
+      "person AS (SELECT p.CONTACT_ID, p.came_in, c.COMPANY_ID, " +
+      "COALESCE(NULLIF(co.NAME,''), NULLIF(c.COMPANY_NAME,''), c.EMAIL_DOMAIN) org, co.DOMAIN, " +
+      "COALESCE(co.ENRICH_EMPLOYEE_COUNT, co.NUMBEROFEMPLOYEES) employees, co.CURRENT_ARR, co.IS_TARGET_ACCOUNT, " +
+      "co.IDEAL_CUSTOMER_PROFILE, COALESCE(co.SEGMENT, p.form_segment) segment, co.INDUSTRY " +
+      "FROM promo p LEFT JOIN ANALYTICS.GO_TO_MARKET.HUBSPOT_CONTACT c ON c.ID = p.CONTACT_ID " +
+      "LEFT JOIN ANALYTICS.GO_TO_MARKET.HUBSPOT_COMPANY co ON co.ID = c.COMPANY_ID), " +
+      "d AS (SELECT hd.COMPANY_ID, hd.DEAL_ID, hd.ALL_CONTACT_IDS, hd.STAGE_NAME, hd.OWNER_NAME, hd.TRIALING_DATE, " +
+      "hd.TRIAL_SECURED_ENTRY_DATE, hd.CLOSED_WON_ENTRY_DATE, hd.IS_CLOSED_WON, hd.IS_CLOSED_LOST " +
+      "FROM ANALYTICS.GO_TO_MARKET.HUBSPOT_DEAL hd WHERE hd.DEAL_ID IN (" + dealSet + ") " +
+      "AND COALESCE(hd.IS_SPAM,FALSE)=FALSE AND COALESCE(hd.CLOSED_LOST_SUB_REASON,'') <> 'Spam/Litigator'), " +
+      "dcx AS (SELECT d.DEAL_ID, d.COMPANY_ID, f.VALUE::number cid FROM d, LATERAL FLATTEN(input => d.ALL_CONTACT_IDS) f), " +
+      "mtg AS (SELECT dcx.COMPANY_ID, MIN(m.CREATED_AT) booked_at, MIN(IFF(m.MEETING_OUTCOME='COMPLETED', m.MEETING_START_TIME, NULL)) held_at " +
+      "FROM dcx JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_CONTACT ec ON ec.CONTACT_ID=dcx.cid AND ec.ENGAGEMENT_TYPE='MEETING' " +
+      "JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_MEETING m ON m.ENGAGEMENT_ID=ec.ENGAGEMENT_ID " +
+      "WHERE m.MEETING_START_TIME >= '2026-08-27 00:00:00 -0700' GROUP BY 1), " +
+      "life AS (SELECT d.COMPANY_ID, ANY_VALUE(d.STAGE_NAME) stage, ANY_VALUE(d.OWNER_NAME) owner, " +
+      "MIN(COALESCE(d.TRIALING_DATE, d.TRIAL_SECURED_ENTRY_DATE)) trial_at, MIN(d.CLOSED_WON_ENTRY_DATE) won_at, " +
+      "MAX(IFF(d.IS_CLOSED_WON,1,0)) won, MAX(IFF(d.IS_CLOSED_LOST,1,0)) lost FROM d GROUP BY 1) " +
+      "SELECT p.org ORG, ANY_VALUE(p.DOMAIN) DOMAIN, MAX(p.employees) EMPLOYEES, MAX(p.CURRENT_ARR) ARR, " +
+      "MAX(IFF(p.IS_TARGET_ACCOUNT,1,0)) TARGET, ANY_VALUE(p.IDEAL_CUSTOMER_PROFILE) ICP, ANY_VALUE(p.segment) SEGMENT, " +
+      "ANY_VALUE(p.INDUSTRY) INDUSTRY, COUNT(DISTINCT p.CONTACT_ID) PEOPLE, " +
+      "TO_CHAR(MIN(p.came_in),'YYYY-MM-DD HH24:MI') CAME_IN, " +
+      "TO_CHAR(MIN(mtg.booked_at),'YYYY-MM-DD HH24:MI') BOOKED_AT, TO_CHAR(MIN(mtg.held_at),'YYYY-MM-DD HH24:MI') HELD_AT, " +
+      "TO_CHAR(MIN(life.trial_at),'YYYY-MM-DD') TRIAL_AT, TO_CHAR(MIN(life.won_at),'YYYY-MM-DD') WON_AT, " +
+      "MAX(life.won) WON, MAX(life.lost) LOST, ANY_VALUE(life.stage) STAGE, ANY_VALUE(life.owner) OWNER " +
+      "FROM person p LEFT JOIN mtg ON mtg.COMPANY_ID = p.COMPANY_ID LEFT JOIN life ON life.COMPANY_ID = p.COMPANY_ID " +
+      "WHERE p.org IS NOT NULL GROUP BY p.org " + TAG('Organizations roster from the Oura Ring Campaign Tracker artifact');
+  }
+
   // ── parsing ───────────────────────────────────────────────────────────
   function asObject(p) {
     if (typeof p === 'string') { try { return JSON.parse(p); } catch (e) { return null; } }
@@ -531,6 +624,7 @@ details.method[open] > summary::before { content: '\2212'; }
     camp: SNAPSHOT.camp, bench: SNAPSHOT.bench, adCost: SNAPSHOT.adCost,
     daily: SNAPSHOT.daily, stages: SNAPSHOT.stages,
     sals: null, salsErr: null,
+    orgs: null, orgsErr: null, orgSort: 'best',
     hsErr: null, sfErr: null, mcp: null,
     ids: [], trialing: [], secured: [], sig: '', daySig: null
   };
@@ -880,7 +974,129 @@ details.method[open] > summary::before { content: '\2212'; }
     $('pulse').innerHTML = '<div class="pulse">' + html + '</div>' + note;
   }
 
-  function renderAll() { renderDaybar(); renderTiles(); renderTable(); renderMix(); renderCharts(); renderPulse(); }
+  // ── organizations ─────────────────────────────────────────────────────
+  var ORG_TABS = [
+    { k: 'best', label: 'Best first' },
+    { k: 'new', label: 'Newest first' },
+    { k: 'old', label: 'Oldest first' },
+    { k: 'far', label: 'Furthest along' }
+  ];
+  var ORG_LIMIT = 40;
+
+  // How much we want them, from the signals HubSpot already carries.
+  function orgScore(o) {
+    var s = 0;
+    if (o.icp === 'tier_1') s += 400; else if (o.icp === 'tier_2') s += 250;
+    if (o.target) s += 120;
+    if (o.arr > 0) s += 100;
+    s += Math.min(num(o.employees) / 1000, 200);
+    return s;
+  }
+  // How far down the funnel they have travelled.
+  function orgDepth(o) {
+    if (o.won_at) return 5;
+    if (o.trial_at) return 4;
+    if (o.held_at) return 3;
+    if (o.booked_at) return 2;
+    return 1;
+  }
+  function orgList() {
+    if (!S.orgs) return null;
+    var list = S.orgs.filter(function (o) { return !S.day || String(o.came_in).slice(0, 10) === S.day; });
+    var by = {
+      best: function (a, b) { return orgScore(b) - orgScore(a) || num(b.employees) - num(a.employees); },
+      new: function (a, b) { return String(b.came_in).localeCompare(String(a.came_in)); },
+      old: function (a, b) { return String(a.came_in).localeCompare(String(b.came_in)); },
+      far: function (a, b) { return orgDepth(b) - orgDepth(a) || orgScore(b) - orgScore(a); }
+    };
+    return list.slice().sort(by[S.orgSort] || by.best);
+  }
+
+  function renderOrgTabs(total) {
+    $('orgtabs').innerHTML = ORG_TABS.map(function (t) {
+      return '<button class="tab" type="button" role="tab" data-sort="' + t.k + '" aria-selected="' +
+        (S.orgSort === t.k ? 'true' : 'false') + '">' + esc(t.label) +
+        (t.k === 'best' && total != null ? '<span class="n">' + int(total) + '</span>' : '') + '</button>';
+    }).join('');
+  }
+
+  function stampDay(v) { return v ? dayLabel(String(v).slice(0, 10)) : ''; }
+  function stampTime(v) { var t = String(v || '').slice(11, 16); return t ? ' ' + t : ''; }
+
+  function orgTrack(o) {
+    var steps = [
+      { k: 'Contact', v: stampDay(o.came_in) + stampTime(o.came_in), on: !!o.came_in },
+      { k: 'Booked', v: stampDay(o.booked_at) + stampTime(o.booked_at), on: !!o.booked_at },
+      { k: 'Held', v: stampDay(o.held_at) + stampTime(o.held_at), on: !!o.held_at },
+      { k: 'Trial', v: stampDay(o.trial_at), on: !!o.trial_at },
+      { k: 'Won', v: stampDay(o.won_at), on: !!o.won_at, won: true }
+    ];
+    var dead = o.lost && !o.won_at;
+    return '<div class="track">' + steps.map(function (st, i) {
+      var cls = 'step';
+      if (st.on) cls += st.won ? ' on won' : ' on';
+      else if (dead && i === orgDepth(o)) cls += ' dead';
+      return '<div class="' + cls + '"><div class="step-bar"></div><span class="step-k">' + esc(st.k) + '</span>' +
+        '<span class="step-v">' + esc(st.v || (dead && i === orgDepth(o) ? 'lost' : '—')) + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  function orgFlags(o) {
+    var f = [];
+    if (o.icp === 'tier_1') f.push('<span class="flag t1">ICP T1</span>');
+    else if (o.icp === 'tier_2') f.push('<span class="flag t2">ICP T2</span>');
+    if (o.target) f.push('<span class="flag target">Target</span>');
+    if (o.arr > 0) f.push('<span class="flag customer">Customer ' + esc(money(o.arr)) + '</span>');
+    return f.length ? '<div class="org-flags">' + f.join('') + '</div>' : '';
+  }
+
+  function renderOrgs() {
+    var list = orgList();
+    renderOrgTabs(list ? list.length : null);
+    var wrap = $('orgwrap'), note = $('orgnote');
+    if (S.orgsErr) { wrap.innerHTML = ''; note.innerHTML = errBlock(S.orgsErr, 'Snowflake'); return; }
+    if (!list) {
+      wrap.innerHTML = '';
+      note.innerHTML = '<div class="state skeleton">' + (S.mcp
+        ? 'Loading organizations…'
+        : 'Connect HubSpot and Snowflake on claude.ai to see the accounts — this roster is fetched live with your own credentials and is never stored in the page.') + '</div>';
+      return;
+    }
+    if (!list.length) { wrap.innerHTML = ''; note.innerHTML = '<div class="state">No organizations came in on ' + esc(dayLabel(S.day)) + '.</div>'; return; }
+
+    var shown = list.slice(0, ORG_LIMIT);
+    var head = '<thead><tr><th>Organization</th><th>Size</th><th>Segment</th><th>Contact &rarr; demo &rarr; trial &rarr; closed won</th><th>Now at</th><th>Owner</th></tr></thead>';
+    var body = shown.map(function (o) {
+      var flagged = !!o.icp || o.target || o.arr > 0;
+      var cls = o.icp === 'tier_1' ? ' class="flagged tier1"' : (flagged ? ' class="flagged"' : '');
+      var stage = o.won_at ? 'Closed won' : (o.stage || (o.booked_at ? 'Demo booked' : 'No demo yet'));
+      var pillCls = o.won_at ? 'secured' : o.lost ? 'lost' : o.trial_at ? 'trialing' : 'open';
+      return '<tr' + cls + '>' +
+        '<td><span class="org-name">' + esc(o.org) + '</span>' +
+        (o.domain ? '<span class="org-dom">' + esc(o.domain) + '</span>' : '') + orgFlags(o) + '</td>' +
+        '<td><span class="org-num">' + (o.employees ? int(o.employees) : '—') + '</span>' +
+        (o.people > 1 ? '<span class="org-sub"><br>' + int(o.people) + ' people in</span>' : '') + '</td>' +
+        '<td><span class="org-sub">' + esc(o.segment || '—') + '</span></td>' +
+        '<td>' + orgTrack(o) + '</td>' +
+        '<td><span class="pill ' + pillCls + '">' + esc(stage) + '</span></td>' +
+        '<td><span class="org-sub">' + esc(o.owner || '—') + '</span></td>' +
+        '</tr>';
+    }).join('');
+    wrap.innerHTML = '<table class="orgtable">' + head + '<tbody>' + body + '</tbody></table>';
+
+    var msg = 'Showing ' + int(shown.length) + ' of ' + int(list.length) + ' organizations' +
+      (S.day ? ' that came in on ' + esc(dayLabel(S.day)) : '') + '. Accounts carrying an ICP tier, a target marker or existing ARR are railed in orange; tier-1 rows are shaded.';
+    note.innerHTML = '<p class="readnote">' + msg + '</p>';
+  }
+
+  $('orgtabs').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button.tab') : null;
+    if (!b) return;
+    S.orgSort = b.getAttribute('data-sort');
+    renderOrgs();
+  });
+
+  function renderAll() { renderDaybar(); renderTiles(); renderTable(); renderMix(); renderCharts(); renderPulse(); renderOrgs(); }
   renderAll();
 
   // ── status rail ───────────────────────────────────────────────────────
@@ -935,6 +1151,18 @@ details.method[open] > summary::before { content: '\2212'; }
     return true;
   }
 
+  function applyOrgs(rs) {
+    S.orgs = rs.map(function (r) {
+      return {
+        org: r.ORG, domain: r.DOMAIN, employees: orNull(r.EMPLOYEES), arr: num(r.ARR), target: num(r.TARGET) === 1,
+        icp: r.ICP || '', segment: r.SEGMENT, industry: r.INDUSTRY, people: num(r.PEOPLE),
+        came_in: r.CAME_IN, booked_at: r.BOOKED_AT, held_at: r.HELD_AT, trial_at: r.TRIAL_AT, won_at: r.WON_AT,
+        lost: num(r.LOST) === 1, stage: r.STAGE, owner: r.OWNER
+      };
+    });
+    return true;
+  }
+
   function sfHandler(apply, errKey) {
     return function (ev) {
       if (ev.type === 'error') {
@@ -961,7 +1189,8 @@ details.method[open] > summary::before { content: '\2212'; }
     unsubRest.forEach(function (u) { try { u(); } catch (e) {} });
     unsubRest = [
       mcp.watchTool(SF, 'sql_exec', { sql: dailySql(S.ids, S.trialing) }, sfHandler(applyDaily, 'sfErr'), { refetchInterval: 180000, cache: { staleTime: 150000 } }),
-      mcp.watchTool(SF, 'sql_exec', { sql: salsSql(S.ids, S.trialing) }, sfHandler(applySals, 'salsErr'), { refetchInterval: 120000, cache: { staleTime: 90000 } })
+      mcp.watchTool(SF, 'sql_exec', { sql: salsSql(S.ids, S.trialing) }, sfHandler(applySals, 'salsErr'), { refetchInterval: 120000, cache: { staleTime: 90000 } }),
+      mcp.watchTool(SF, 'sql_exec', { sql: orgsSql(S.ids) }, sfHandler(applyOrgs, 'orgsErr'), { refetchInterval: 120000, cache: { staleTime: 90000 } })
     ];
   }
 
