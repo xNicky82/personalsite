@@ -37,6 +37,12 @@ rather than the demo list, so an account appears at Contact before it books
 anything — which is how Stripe shows up while it still has no demo. Each row
 is ranked on the signals HubSpot already carries (ICP tier, target account,
 existing ARR, headcount) and tracked Contact → Booked → Held → Trial → Won.
+Each applicant is named under their organization and linked into HubSpot
+(portal 20853254): the link opens their **deal** where one exists
+(`/record/0-3/<dealId>`) and their **contact record** where the account has
+not booked a demo yet (`/record/0-1/<contactId>`). Up to four names show per
+organization, oldest first, with a "+N more" count beyond that.
+
 Every column sorts on click and reverses on a second click, and each of the
 five dates in the track sorts on its own, so the list can be ordered by when
 an account arrived, booked, held or started a trial. Blanks always sink to

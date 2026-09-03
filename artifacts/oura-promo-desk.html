@@ -238,6 +238,12 @@ button.tab .n { font-family: 'IBM Plex Mono', monospace; opacity: .55; margin-le
 .orgtable tbody tr.tier1 td { background: var(--accent-soft); }
 .org-name { font-weight: 600; font-size: 13.5px; display: block; }
 .org-dom { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-3); }
+.org-people { display: flex; flex-direction: column; gap: 2px; margin-top: 5px; }
+a.applicant { font-size: 12px; color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--rule-strong); align-self: flex-start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.applicant:hover { color: var(--accent); border-bottom-color: var(--accent); }
+a.applicant .to { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); margin-left: 5px; }
+a.applicant:hover .to { color: var(--accent); }
+.org-more { font-size: 11px; color: var(--ink-3); }
 .org-flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .flag { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: .05em; text-transform: uppercase; padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
 .flag.t1 { background: var(--accent); color: #fff; }
@@ -394,7 +400,7 @@ button.sorth[aria-sort] .arrow { opacity: 1; }
       </div>
       <div class="def">
         <h4>The Organizations tab</h4>
-        <p>Ranked on the signals HubSpot already carries: <b>ICP tier 1 or 2</b> first, then target accounts, then existing customers by ARR, then headcount. Its cohort is everyone who filled the promo form, so an account appears at <b>Contact</b> before it ever books. Every column sorts, and each of the five dates in the track sorts on its own, so you can order by when an account arrived, when it booked, when it held or when it started a trial. Blanks always sink to the bottom. The day chips on the funnel table also narrow it, on the day the account came in.</p>
+        <p>Ranked on the signals HubSpot already carries: <b>ICP tier 1 or 2</b> first, then target accounts, then existing customers by ARR, then headcount. Its cohort is everyone who filled the promo form, so an account appears at <b>Contact</b> before it ever books. Every applicant is named and linked into HubSpot: the link opens their <b>deal</b> when there is one, and their <b>contact record</b> when the account has not booked a demo yet. Every column sorts, and each of the five dates in the track sorts on its own, so you can order by when an account arrived, when it booked, when it held or when it started a trial. Blanks always sink to the bottom. The day chips on the funnel table also narrow it, on the day the account came in.</p>
       </div>
       <div class="def">
         <h4>Freshness</h4>
@@ -566,6 +572,7 @@ button.sorth[aria-sort] .arrow { opacity: 1; }
       "FROM ANALYTICS.GO_TO_MARKET.WEBSITE_FORM_SUBMISSION_TO_CALENDLY_BOOKING_TO_HUBSPOT_DEAL " +
       "WHERE PAGE_PATH='" + PROMO_PAGE + "' AND CONTACT_ID IS NOT NULL GROUP BY 1), " +
       "person AS (SELECT p.CONTACT_ID, p.came_in, c.COMPANY_ID, " +
+      "TRIM(COALESCE(c.FIRST_NAME,'') || ' ' || COALESCE(c.LAST_NAME,'')) person_name, c.EMAIL, " +
       "COALESCE(NULLIF(co.NAME,''), NULLIF(c.COMPANY_NAME,''), c.EMAIL_DOMAIN) org, co.DOMAIN, " +
       "COALESCE(co.ENRICH_EMPLOYEE_COUNT, co.NUMBEROFEMPLOYEES) employees, co.CURRENT_ARR, co.IS_TARGET_ACCOUNT, " +
       "co.IDEAL_CUSTOMER_PROFILE, COALESCE(co.SEGMENT, p.form_segment) segment, co.INDUSTRY " +
@@ -580,6 +587,7 @@ button.sorth[aria-sort] .arrow { opacity: 1; }
       "FROM dcx JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_CONTACT ec ON ec.CONTACT_ID=dcx.cid AND ec.ENGAGEMENT_TYPE='MEETING' " +
       "JOIN ANALYTICS.STAGING.STG_HUBSPOT_ENGAGEMENT_MEETING m ON m.ENGAGEMENT_ID=ec.ENGAGEMENT_ID " +
       "WHERE m.MEETING_START_TIME >= '2026-08-27 00:00:00 -0700' GROUP BY 1), " +
+      "dealmap AS (SELECT dcx.cid, MIN(dcx.DEAL_ID) deal_id FROM dcx GROUP BY 1), " +
       "life AS (SELECT d.COMPANY_ID, ANY_VALUE(d.STAGE_NAME) stage, ANY_VALUE(d.OWNER_NAME) owner, " +
       "MIN(COALESCE(d.TRIALING_DATE, d.TRIAL_SECURED_ENTRY_DATE)) trial_at, MIN(d.CLOSED_WON_ENTRY_DATE) won_at, " +
       "MAX(IFF(d.IS_CLOSED_WON,1,0)) won, MAX(IFF(d.IS_CLOSED_LOST,1,0)) lost FROM d GROUP BY 1) " +
@@ -589,8 +597,11 @@ button.sorth[aria-sort] .arrow { opacity: 1; }
       "TO_CHAR(MIN(p.came_in),'YYYY-MM-DD HH24:MI') CAME_IN, " +
       "TO_CHAR(MIN(mtg.booked_at),'YYYY-MM-DD HH24:MI') BOOKED_AT, TO_CHAR(MIN(mtg.held_at),'YYYY-MM-DD HH24:MI') HELD_AT, " +
       "TO_CHAR(MIN(life.trial_at),'YYYY-MM-DD') TRIAL_AT, TO_CHAR(MIN(life.won_at),'YYYY-MM-DD') WON_AT, " +
-      "MAX(life.won) WON, MAX(life.lost) LOST, ANY_VALUE(life.stage) STAGE, ANY_VALUE(life.owner) OWNER " +
+      "MAX(life.won) WON, MAX(life.lost) LOST, ANY_VALUE(life.stage) STAGE, ANY_VALUE(life.owner) OWNER, " +
+      "TO_JSON(ARRAY_SLICE(ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL('n', p.person_name, 'e', p.EMAIL, " +
+      "'c', p.CONTACT_ID::string, 'd', dm.deal_id::string)) WITHIN GROUP (ORDER BY p.came_in), 0, 6)) APPLICANTS " +
       "FROM person p LEFT JOIN mtg ON mtg.COMPANY_ID = p.COMPANY_ID LEFT JOIN life ON life.COMPANY_ID = p.COMPANY_ID " +
+      "LEFT JOIN dealmap dm ON dm.cid = p.CONTACT_ID " +
       "WHERE p.org IS NOT NULL GROUP BY p.org " + TAG('Organizations roster from the Oura Ring Campaign Tracker artifact');
   }
 
@@ -1086,6 +1097,40 @@ button.sorth[aria-sort] .arrow { opacity: 1; }
     }).join('') + '</div>';
   }
 
+  // Snowflake hands the applicants back as a JSON array string.
+  function parseApplicants(v) {
+    if (!v) return [];
+    var a = v;
+    if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { return []; } }
+    if (!a || !a.length) return [];
+    return a.filter(function (x) { return x && (x.c || x.n); }).map(function (x) {
+      return { name: x.n || x.e || 'Unnamed contact', email: x.e || '', contactId: x.c || '', dealId: x.d || '' };
+    });
+  }
+
+  var HS_RECORD = 'https://app.hubspot.com/contacts/' + PORTAL + '/record/';
+  function dealUrl(id) { return HS_RECORD + '0-3/' + encodeURIComponent(id); }
+  function contactUrl(id) { return HS_RECORD + '0-1/' + encodeURIComponent(id); }
+
+  // The person who applied, linked into HubSpot. Their deal where one exists —
+  // that is the record you actually want open — and their contact record
+  // where the demo has not been booked yet and no deal exists.
+  function orgApplicants(o) {
+    var list = o.applicants || [];
+    if (!list.length) return '';
+    var rows = list.slice(0, 4).map(function (a) {
+      var toDeal = !!a.dealId;
+      var href = toDeal ? dealUrl(a.dealId) : (a.contactId ? contactUrl(a.contactId) : '');
+      var label = toDeal ? 'deal' : 'contact';
+      var title = a.name + (a.email ? ' · ' + a.email : '') + ' — opens the ' + label + ' in HubSpot';
+      if (!href) return '<span class="applicant">' + esc(a.name) + '</span>';
+      return '<a class="applicant" href="' + esc(href) + '" target="_blank" rel="noopener" title="' + esc(title) + '">' +
+        esc(a.name) + '<span class="to">' + label + '</span></a>';
+    }).join('');
+    var extra = list.length > 4 ? '<span class="org-more">+' + (list.length - 4) + ' more</span>' : '';
+    return '<div class="org-people">' + rows + extra + '</div>';
+  }
+
   function orgFlags(o) {
     var f = [];
     if (o.icp === 'tier_1') f.push('<span class="flag t1">ICP T1</span>');
@@ -1128,9 +1173,9 @@ button.sorth[aria-sort] .arrow { opacity: 1; }
       var pillCls = o.won_at ? 'secured' : o.lost ? 'lost' : o.trial_at ? 'trialing' : 'open';
       return '<tr' + cls + '>' +
         '<td><span class="org-name">' + esc(o.org) + '</span>' +
-        (o.domain ? '<span class="org-dom">' + esc(o.domain) + '</span>' : '') + orgFlags(o) + '</td>' +
+        (o.domain ? '<span class="org-dom">' + esc(o.domain) + '</span>' : '') + orgFlags(o) + orgApplicants(o) + '</td>' +
         '<td><span class="org-num">' + (o.employees ? int(o.employees) : '—') + '</span>' +
-        (o.people > 1 ? '<span class="org-sub"><br>' + int(o.people) + ' people in</span>' : '') + '</td>' +
+        (o.people > 1 ? '<span class="org-sub"><br>' + int(o.people) + ' applied</span>' : '') + '</td>' +
         '<td><span class="org-sub">' + esc(o.segment || '—') + '</span></td>' +
         '<td>' + orgTrack(o) + '</td>' +
         '<td><span class="pill ' + pillCls + '">' + esc(stage) + '</span></td>' +
@@ -1140,7 +1185,7 @@ button.sorth[aria-sort] .arrow { opacity: 1; }
     wrap.innerHTML = '<table class="orgtable">' + head + '<tbody>' + body + '</tbody></table>';
 
     var msg = 'Showing ' + int(shown.length) + ' of ' + int(list.length) + ' organizations' +
-      (S.day ? ' that came in on ' + esc(dayLabel(S.day)) : '') + '. Click any column to sort, including each date in the track, and click it again to reverse. Accounts carrying an ICP tier, a target marker or existing ARR are railed in orange; tier-1 rows are shaded.';
+      (S.day ? ' that came in on ' + esc(dayLabel(S.day)) : '') + '. Each name links into HubSpot — to their deal where one exists, to their contact record where no demo is booked yet. Click any column to sort, including each date in the track, and click it again to reverse. Accounts carrying an ICP tier, a target marker or existing ARR are railed in orange; tier-1 rows are shaded.';
     note.innerHTML = '<p class="readnote">' + msg + '</p>';
   }
 
@@ -1224,7 +1269,8 @@ button.sorth[aria-sort] .arrow { opacity: 1; }
         org: r.ORG, domain: r.DOMAIN, employees: orNull(r.EMPLOYEES), arr: num(r.ARR), target: num(r.TARGET) === 1,
         icp: r.ICP || '', segment: r.SEGMENT, industry: r.INDUSTRY, people: num(r.PEOPLE),
         came_in: r.CAME_IN, booked_at: r.BOOKED_AT, held_at: r.HELD_AT, trial_at: r.TRIAL_AT, won_at: r.WON_AT,
-        lost: num(r.LOST) === 1, stage: r.STAGE, owner: r.OWNER
+        lost: num(r.LOST) === 1, stage: r.STAGE, owner: r.OWNER,
+        applicants: parseApplicants(r.APPLICANTS)
       };
     });
     return true;
