@@ -37,8 +37,12 @@ rather than the demo list, so an account appears at Contact before it books
 anything — which is how Stripe shows up while it still has no demo. Each row
 is ranked on the signals HubSpot already carries (ICP tier, target account,
 existing ARR, headcount) and tracked Contact → Booked → Held → Trial → Won.
-Its tabs sort best / newest / oldest / furthest along, and the funnel table's
-day chips also narrow it, on the day the account came in.
+Every column sorts on click and reverses on a second click, and each of the
+five dates in the track sorts on its own, so the list can be ordered by when
+an account arrived, booked, held or started a trial. Blanks always sink to
+the bottom. The tabs above are presets over the same mechanism (best /
+newest / oldest / furthest along), and the funnel table's day chips narrow
+it on the day the account came in.
 
 Like the SAL roster, it is fetched live per viewer and kept out of `SNAPSHOT`,
 so no account or contact data is baked into the published page.

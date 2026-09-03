@@ -247,6 +247,19 @@ button.tab .n { font-family: 'IBM Plex Mono', monospace; opacity: .55; margin-le
 .org-num { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; font-size: 12.5px; white-space: nowrap; }
 .org-sub { font-size: 11px; color: var(--ink-3); }
 
+button.sorth {
+  font: inherit; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3);
+  background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+  white-space: nowrap;
+}
+button.sorth:hover { color: var(--ink); }
+button.sorth[aria-sort] { color: var(--accent); }
+button.sorth .arrow { font-size: 9px; opacity: 0; }
+button.sorth[aria-sort] .arrow { opacity: 1; }
+.trackhead { display: grid; grid-template-columns: repeat(5, minmax(52px, 1fr)); gap: 3px; min-width: 300px; }
+.trackhead button.sorth { font-size: 8.5px; letter-spacing: .05em; gap: 2px; }
+
 .track { display: grid; grid-template-columns: repeat(5, minmax(52px, 1fr)); gap: 3px; min-width: 300px; }
 .step { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .step-bar { height: 4px; border-radius: 2px; background: var(--rule); }
@@ -381,7 +394,7 @@ button.tab .n { font-family: 'IBM Plex Mono', monospace; opacity: .55; margin-le
       </div>
       <div class="def">
         <h4>The Organizations tab</h4>
-        <p>Ranked on the signals HubSpot already carries: <b>ICP tier 1 or 2</b> first, then target accounts, then existing customers by ARR, then headcount. Its cohort is everyone who filled the promo form, so an account appears at <b>Contact</b> before it ever books. Sort by newest to read it as an arrivals board; the day chips on the funnel table also narrow it, on the day the account came in.</p>
+        <p>Ranked on the signals HubSpot already carries: <b>ICP tier 1 or 2</b> first, then target accounts, then existing customers by ARR, then headcount. Its cohort is everyone who filled the promo form, so an account appears at <b>Contact</b> before it ever books. Every column sorts, and each of the five dates in the track sorts on its own, so you can order by when an account arrived, when it booked, when it held or when it started a trial. Blanks always sink to the bottom. The day chips on the funnel table also narrow it, on the day the account came in.</p>
       </div>
       <div class="def">
         <h4>Freshness</h4>
@@ -624,7 +637,7 @@ button.tab .n { font-family: 'IBM Plex Mono', monospace; opacity: .55; margin-le
     camp: SNAPSHOT.camp, bench: SNAPSHOT.bench, adCost: SNAPSHOT.adCost,
     daily: SNAPSHOT.daily, stages: SNAPSHOT.stages,
     sals: null, salsErr: null,
-    orgs: null, orgsErr: null, orgSort: 'best',
+    orgs: null, orgsErr: null, orgKey: 'score', orgDir: -1,
     hsErr: null, sfErr: null, mcp: null,
     ids: [], trialing: [], secured: [], sig: '', daySig: null
   };
@@ -976,10 +989,10 @@ button.tab .n { font-family: 'IBM Plex Mono', monospace; opacity: .55; margin-le
 
   // ── organizations ─────────────────────────────────────────────────────
   var ORG_TABS = [
-    { k: 'best', label: 'Best first' },
-    { k: 'new', label: 'Newest first' },
-    { k: 'old', label: 'Oldest first' },
-    { k: 'far', label: 'Furthest along' }
+    { key: 'score', dir: -1, label: 'Best first' },
+    { key: 'came_in', dir: -1, label: 'Newest first' },
+    { key: 'came_in', dir: 1, label: 'Oldest first' },
+    { key: 'depth', dir: -1, label: 'Furthest along' }
   ];
   var ORG_LIMIT = 40;
 
@@ -1000,24 +1013,56 @@ button.tab .n { font-family: 'IBM Plex Mono', monospace; opacity: .55; margin-le
     if (o.booked_at) return 2;
     return 1;
   }
+  // Every column sorts, and the five dates in the track sort individually, so
+  // "by date" can mean any step of the journey. Blanks always sink to the
+  // bottom, whichever direction is active — an account that never held a demo
+  // is not "earliest".
+  var ORG_KEYS = {
+    score: { type: 'num', get: orgScore },
+    depth: { type: 'num', get: orgDepth },
+    org: { type: 'str', get: function (o) { return o.org; } },
+    employees: { type: 'num', get: function (o) { return o.employees; } },
+    segment: { type: 'str', get: function (o) { return o.segment; } },
+    came_in: { type: 'str', get: function (o) { return o.came_in; } },
+    booked_at: { type: 'str', get: function (o) { return o.booked_at; } },
+    held_at: { type: 'str', get: function (o) { return o.held_at; } },
+    trial_at: { type: 'str', get: function (o) { return o.trial_at; } },
+    won_at: { type: 'str', get: function (o) { return o.won_at; } },
+    stage: { type: 'str', get: function (o) { return o.stage; } },
+    owner: { type: 'str', get: function (o) { return o.owner; } }
+  };
+  function orgCmp(a, b) {
+    var spec = ORG_KEYS[S.orgKey] || ORG_KEYS.score;
+    var av = spec.get(a), bv = spec.get(b);
+    var ae = av === null || av === undefined || av === '';
+    var be = bv === null || bv === undefined || bv === '';
+    if (ae && be) return orgScore(b) - orgScore(a);
+    if (ae) return 1;
+    if (be) return -1;
+    var d = spec.type === 'num' ? num(av) - num(bv) : String(av).localeCompare(String(bv));
+    return (d * S.orgDir) || (orgScore(b) - orgScore(a));
+  }
   function orgList() {
     if (!S.orgs) return null;
     var list = S.orgs.filter(function (o) { return !S.day || String(o.came_in).slice(0, 10) === S.day; });
-    var by = {
-      best: function (a, b) { return orgScore(b) - orgScore(a) || num(b.employees) - num(a.employees); },
-      new: function (a, b) { return String(b.came_in).localeCompare(String(a.came_in)); },
-      old: function (a, b) { return String(a.came_in).localeCompare(String(b.came_in)); },
-      far: function (a, b) { return orgDepth(b) - orgDepth(a) || orgScore(b) - orgScore(a); }
-    };
-    return list.slice().sort(by[S.orgSort] || by.best);
+    return list.slice().sort(orgCmp);
   }
 
   function renderOrgTabs(total) {
     $('orgtabs').innerHTML = ORG_TABS.map(function (t) {
-      return '<button class="tab" type="button" role="tab" data-sort="' + t.k + '" aria-selected="' +
-        (S.orgSort === t.k ? 'true' : 'false') + '">' + esc(t.label) +
-        (t.k === 'best' && total != null ? '<span class="n">' + int(total) + '</span>' : '') + '</button>';
+      var on = S.orgKey === t.key && S.orgDir === t.dir;
+      return '<button class="tab" type="button" role="tab" data-key="' + t.key + '" data-dir="' + t.dir +
+        '" aria-selected="' + (on ? 'true' : 'false') + '">' + esc(t.label) +
+        (t.key === 'score' && total != null ? '<span class="n">' + int(total) + '</span>' : '') + '</button>';
     }).join('');
+  }
+
+  function sortH(key, label) {
+    var on = S.orgKey === key;
+    return '<button class="sorth" type="button" data-key="' + key + '"' +
+      (on ? ' aria-sort="' + (S.orgDir > 0 ? 'ascending' : 'descending') + '"' : '') +
+      ' title="Sort by ' + esc(label) + '">' + esc(label) +
+      '<span class="arrow">' + (on && S.orgDir > 0 ? '\u25B2' : '\u25BC') + '</span></button>';
   }
 
   function stampDay(v) { return v ? dayLabel(String(v).slice(0, 10)) : ''; }
@@ -1065,7 +1110,17 @@ button.tab .n { font-family: 'IBM Plex Mono', monospace; opacity: .55; margin-le
     if (!list.length) { wrap.innerHTML = ''; note.innerHTML = '<div class="state">No organizations came in on ' + esc(dayLabel(S.day)) + '.</div>'; return; }
 
     var shown = list.slice(0, ORG_LIMIT);
-    var head = '<thead><tr><th>Organization</th><th>Size</th><th>Segment</th><th>Contact &rarr; demo &rarr; trial &rarr; closed won</th><th>Now at</th><th>Owner</th></tr></thead>';
+    var head = '<thead><tr>' +
+      '<th>' + sortH('org', 'Organization') + '</th>' +
+      '<th>' + sortH('employees', 'Size') + '</th>' +
+      '<th>' + sortH('segment', 'Segment') + '</th>' +
+      '<th><div class="trackhead">' +
+        sortH('came_in', 'Contact') + sortH('booked_at', 'Booked') + sortH('held_at', 'Held') +
+        sortH('trial_at', 'Trial') + sortH('won_at', 'Won') +
+      '</div></th>' +
+      '<th>' + sortH('stage', 'Now at') + '</th>' +
+      '<th>' + sortH('owner', 'Owner') + '</th>' +
+      '</tr></thead>';
     var body = shown.map(function (o) {
       var flagged = !!o.icp || o.target || o.arr > 0;
       var cls = o.icp === 'tier_1' ? ' class="flagged tier1"' : (flagged ? ' class="flagged"' : '');
@@ -1085,14 +1140,26 @@ button.tab .n { font-family: 'IBM Plex Mono', monospace; opacity: .55; margin-le
     wrap.innerHTML = '<table class="orgtable">' + head + '<tbody>' + body + '</tbody></table>';
 
     var msg = 'Showing ' + int(shown.length) + ' of ' + int(list.length) + ' organizations' +
-      (S.day ? ' that came in on ' + esc(dayLabel(S.day)) : '') + '. Accounts carrying an ICP tier, a target marker or existing ARR are railed in orange; tier-1 rows are shaded.';
+      (S.day ? ' that came in on ' + esc(dayLabel(S.day)) : '') + '. Click any column to sort, including each date in the track, and click it again to reverse. Accounts carrying an ICP tier, a target marker or existing ARR are railed in orange; tier-1 rows are shaded.';
     note.innerHTML = '<p class="readnote">' + msg + '</p>';
   }
 
   $('orgtabs').addEventListener('click', function (e) {
     var b = e.target.closest ? e.target.closest('button.tab') : null;
     if (!b) return;
-    S.orgSort = b.getAttribute('data-sort');
+    S.orgKey = b.getAttribute('data-key');
+    S.orgDir = num(b.getAttribute('data-dir')) || -1;
+    renderOrgs();
+  });
+
+  // Click a column to sort by it; click it again to flip. Dates open newest
+  // first, names open A to Z.
+  $('orgwrap').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button.sorth') : null;
+    if (!b) return;
+    var key = b.getAttribute('data-key');
+    if (S.orgKey === key) S.orgDir = -S.orgDir;
+    else { S.orgKey = key; S.orgDir = (ORG_KEYS[key] && ORG_KEYS[key].type === 'str' && key.indexOf('_at') < 0 && key !== 'came_in') ? 1 : -1; }
     renderOrgs();
   });
 
