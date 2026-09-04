@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatEastern,
   hostFirstNameFromTitle,
-  parseEpochMs,
+  parseMeetingStartMs,
   resolveDemo,
   titleNamesLead,
 } from '@/lib/oura-alerts/meeting'
@@ -17,17 +17,21 @@ describe('formatEastern', () => {
   })
 })
 
-describe('parseEpochMs', () => {
+describe('parseMeetingStartMs', () => {
   it('accepts the milliseconds HubSpot sends, as a number or a string', () => {
-    expect(parseEpochMs(FRI_10AM)).toBe(FRI_10AM)
-    expect(parseEpochMs(String(FRI_10AM))).toBe(FRI_10AM)
+    expect(parseMeetingStartMs(FRI_10AM)).toBe(FRI_10AM)
+    expect(parseMeetingStartMs(String(FRI_10AM))).toBe(FRI_10AM)
+  })
+
+  it('accepts the ISO 8601 the live portal actually returns', () => {
+    expect(parseMeetingStartMs('2026-09-04T14:00:00Z')).toBe(FRI_10AM)
   })
 
   it('treats blank and nonsense as no meeting', () => {
-    expect(parseEpochMs('')).toBeNull()
-    expect(parseEpochMs(null)).toBeNull()
-    expect(parseEpochMs(undefined)).toBeNull()
-    expect(parseEpochMs('soon')).toBeNull()
+    expect(parseMeetingStartMs('')).toBeNull()
+    expect(parseMeetingStartMs(null)).toBeNull()
+    expect(parseMeetingStartMs(undefined)).toBeNull()
+    expect(parseMeetingStartMs('soon')).toBeNull()
   })
 })
 
@@ -40,12 +44,20 @@ describe('hostFirstNameFromTitle', () => {
     ).toBe('Hailey')
   })
 
-  it('ignores the Gong prefix', () => {
+  it('ignores the Gong prefix and a trailing space', () => {
     expect(
       hostFirstNameFromTitle(
-        '[Gong] Britt Killian <> Spellbook - Meeting with Jordan',
+        '[Gong] Britt Killian <> Spellbook - Meeting with Jordan ',
       ),
     ).toBe('Jordan')
+  })
+
+  // Real titles in this portal also take freeform shapes, where the trailing
+  // word is not a person.
+  it('does not guess a host from a title with no "Meeting with"', () => {
+    expect(
+      hostFirstNameFromTitle('[Gong] Sabrina & Marcus | Mondelez & Spellbook'),
+    ).toBe('')
   })
 })
 

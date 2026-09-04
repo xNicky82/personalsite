@@ -54,13 +54,26 @@ export function formatEastern(epochMs: number): string {
   return `${get('weekday')} ${get('month')} ${get('day')}, ${get('hour')}:${get('minute')}${period} ET`
 }
 
-// Timestamps arrive as epoch milliseconds, not ISO strings, and sometimes as
-// strings holding those milliseconds.
-export function parseEpochMs(value: unknown): number | null {
+// The brief describes these as epoch milliseconds, and the live portal returns
+// ISO 8601 ("2026-09-10T17:30:00Z"). Accept both: reading this wrong does not
+// error, it silently reports every booked demo as "not on a calendar yet".
+export function parseMeetingStartMs(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null
-  const n = typeof value === 'number' ? value : Number(String(value).trim())
-  if (!Number.isFinite(n) || n <= 0) return null
-  return n
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0 ? value : null
+  }
+
+  const raw = String(value).trim()
+  if (!raw) return null
+
+  if (/^\d+$/.test(raw)) {
+    const n = Number(raw)
+    return Number.isFinite(n) && n > 0 ? n : null
+  }
+
+  const parsed = Date.parse(raw)
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 function stripPrefix(title: string): string {
@@ -68,16 +81,16 @@ function stripPrefix(title: string): string {
   return title.replace(/^\s*\[[^\]]*\]\s*/, '').trim()
 }
 
-// "Britt Killian <> Spellbook - Meeting with Hailey" → "Hailey"
+// "Britt Killian <> Spellbook - Meeting with Hailey" -> "Hailey"
+//
+// Only the "Meeting with" shape is trusted. Titles in this portal also take
+// freeform shapes ("[Gong] Sabrina & Marcus | Mondelez & Spellbook"), and
+// guessing at the trailing word reads "Spellbook" as an AE.
 export function hostFirstNameFromTitle(title: string): string {
   const clean = stripPrefix(title ?? '')
   if (!clean) return ''
   const withMatch = clean.match(/meeting with\s+([A-Za-z][A-Za-z'’-]*)/i)
-  if (withMatch) return withMatch[1]
-  // Fall back to the trailing word, which is the AE first name on the shapes we
-  // have seen that do not spell out "Meeting with".
-  const trailing = clean.split(/\s+/).pop() ?? ''
-  return /^[A-Za-z][A-Za-z'’-]*$/.test(trailing) ? trailing : ''
+  return withMatch ? withMatch[1] : ''
 }
 
 function escapeRegExp(value: string): string {

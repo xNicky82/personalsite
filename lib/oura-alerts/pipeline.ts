@@ -17,9 +17,20 @@ import {
 } from './hubspot'
 import { gradeLead } from './grade'
 import { displayName, nameParts } from './lead-name'
-import { parseEpochMs, resolveDemo } from './meeting'
+import { parseMeetingStartMs, resolveDemo } from './meeting'
 import type { LeadData } from './prompt'
 import { deliver } from './slack'
+
+// How long to wait before re-reading a deal that arrived with no meeting time.
+// Long enough to lose the race with HubSpot's own write, short enough that the
+// alert still reaches the AE well before the call.
+// Read at call time so it can be tuned per environment (and driven to zero in
+// tests) without a redeploy.
+const meetingRecheckMs = () =>
+  Number(process.env.OURA_MEETING_RECHECK_MS ?? 45_000)
+
+const sleep = (ms: number) =>
+  ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve()
 
 export type Deps = {
   fetchDeal: typeof fetchDeal
@@ -76,10 +87,24 @@ export async function processDeal(
     deps.fetchOwnerName(deal.ownerId),
   ])
 
+  // The webhook fires on deal.creation, and the meeting properties are written
+  // by a separate process that can land seconds later, so a blank meeting time
+  // on the first read is more often a race than a demo that is genuinely not
+  // booked. Re-read once before believing it, because the wrong answer here is
+  // silent: every alert would say "not on a calendar yet".
+  let meetingName = deal.nextMeetingName
+  let meetingStartMs = parseMeetingStartMs(deal.nextMeetingStartMs)
+  if (meetingStartMs === null) {
+    await sleep(meetingRecheckMs())
+    const reread = await deps.fetchDeal(dealId)
+    meetingName = reread.nextMeetingName
+    meetingStartMs = parseMeetingStartMs(reread.nextMeetingStartMs)
+  }
+
   const { first, last } = nameParts(contact.firstname, contact.lastname)
   const demo = resolveDemo({
-    eventTitle: deal.nextMeetingName,
-    startMs: parseEpochMs(deal.nextMeetingStartMs),
+    eventTitle: meetingName,
+    startMs: meetingStartMs,
     leadFirst: first,
     leadLast: last,
     dealOwner,
@@ -99,8 +124,8 @@ export async function processDeal(
     industry: company?.industry ?? '',
     companyDescription: company?.description ?? '',
     dealOwner,
-    eventTitle: deal.nextMeetingName,
-    meetingStartMs: deal.nextMeetingStartMs,
+    eventTitle: meetingName,
+    meetingStartMs: String(meetingStartMs ?? ''),
     dealAmount: deal.amount,
     dealId: deal.id,
     resolvedDemoLine: demo.line,

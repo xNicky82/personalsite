@@ -94,6 +94,8 @@ beforeEach(() => {
   process.env.SHADOW_MODE = 'true'
   process.env.SHADOW_RECIPIENT = 'U0BAPSYFLSV'
   process.env.SLACK_BOT_TOKEN = 'xoxb-test'
+  // Do not sleep through the meeting re-read in tests.
+  process.env.OURA_MEETING_RECHECK_MS = '0'
 })
 
 afterEach(() => {

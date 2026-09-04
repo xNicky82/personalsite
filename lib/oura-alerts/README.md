@@ -99,6 +99,26 @@ are archived, every alert degrades silently to "not on a calendar yet" rather
 than erroring. Worth chasing whoever owns that cleanup, and worth reading
 meetings through the engagements API as a fallback if it goes ahead.
 
+**The AE Slack id map is incomplete.** `config.ts` carries the eight names from
+the original brief. In a sample of twelve recent deals in this pipeline, the
+calendar titles named eleven hosts and only two of them (Scott, Hailey) were on
+that list; Philip, Jake, Alan, Lake, Juliette, Zev, Andrew and Katrina were not.
+An unknown host is never mentioned and the alert falls back to naming the deal
+owner, which is safe but means most alerts would not reach the person running
+the call once live mode is switched on. The map needs the real roster before
+`SHADOW_MODE=false`.
+
+**Meeting properties can arrive after the deal.** The webhook fires on
+`deal.creation` and `hs_next_meeting_start_time` is written by a separate
+process that can land seconds later, so `pipeline.ts` re-reads the deal once
+(after `OURA_MEETING_RECHECK_MS`, default 45s) when the first read has no
+meeting time. Without that, a booked demo reports as "not on a calendar yet".
+
+**The meeting start format is not what the brief says.** The brief describes
+epoch milliseconds; the live portal returns ISO 8601 (`2026-09-10T17:30:00Z`).
+`parseMeetingStartMs` accepts both, because reading it wrong does not error, it
+silently blanks the Demo line on every alert.
+
 **The form writes full names into `firstname`.** Records exist with
 `firstname: "Zane Jones", lastname: "Jones"`. `lead-name.ts` handles it and
 `lead-name.test.ts` pins it, but the real fix is upstream in the form.
